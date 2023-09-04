@@ -1,2 +1,2 @@
-# Urban-Vehicle-Detection-via-DL
+# YOLO models evaluation Streamlit app
 Deep Learning-based approach for detecting vehicles in urban environments, leveraging advanced neural network architectures to ensure accurate and real-time results in complex cityscapes.
