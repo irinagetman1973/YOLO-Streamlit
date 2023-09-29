@@ -111,6 +111,9 @@ myvenv/
 ENV/
 env.bak/
 venv.bak/
+myvenv1/
+venv/
+
 
 # Spyder project settings
 .spyderproject
@@ -144,3 +147,4 @@ weights/
 
 #generated detected videos
 results/
+capstone-c23c5-4e7a43be2c53.json
