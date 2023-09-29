@@ -1,0 +1,17 @@
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: $2b$12$K7YCb2NDtJaa8JSFv.Ey3ugEcr1teR3T4zZVkMZ4udL1W/vRL3yly
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: $2b$12$auevVQGaeUY8mpisHEHV1OiThr8I1hRs225w1yS88OgpF7W5J39oy
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be string
+  name: some_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
