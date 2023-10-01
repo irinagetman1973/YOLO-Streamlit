@@ -2,7 +2,7 @@
 # Comparative Vehicle Detection: A Capstone Project
 
 **Bachelor of Software Engineering**  
-_Yoobee Colleges of Creative Innovations, Auckland_
+_Yoobee College of Creative Innovation, Auckland_
 
 ## Introduction
 
