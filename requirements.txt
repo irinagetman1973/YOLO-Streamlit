@@ -52,3 +52,5 @@ psutil  # system utilization
 supervision
 # deta
 firebase_admin
+# pyrebase
+python-dotenv

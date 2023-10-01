@@ -12,13 +12,15 @@ st.set_page_config(
     page_title="Vehicle Tracking with YOLOv8",
     page_icon="🎓",
     layout="wide",
-    # initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"
     )
 
 
-# Initialize session state variables
+#    ------# Initialize session state variables------------
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
+
+
 def main():
     # Set default page if not set
     if 'page' not in st.session_state:
@@ -30,11 +32,11 @@ def main():
     elif st.session_state.page == 'authentication':
         display_authentication_page()
     elif st.session_state.page == 'dashboard':
-        display_dashboard()  # Assuming you have a function for this
+        display_dashboard()  
     display_sidebar()
+    
 
-def display_sidebar():
-   
+def display_sidebar():   
 
     if not st.session_state.get('authenticated', False):
         if st.sidebar.button("Login/Sign Up", key="login_signup_button"):
@@ -53,14 +55,14 @@ def display_main_page():
     # Sidebar
     st.sidebar.header("YOLO Models")
 
-    if not st.session_state.get('authenticated', False):
-        if st.sidebar.button("Login/Sign Up"):
-            st.session_state.page = 'authentication'  # Redirect to authentication page
-            return  # Exit the function immediately after setting the page
-    else:
-        if st.sidebar.button("Dashboard"):
-            st.session_state.page = 'dashboard'
-            return  # Exit the function immediately after setting the page
+    # if not st.session_state.get('authenticated', False):
+    #     if st.sidebar.button("Login/Sign Up"):
+    #         st.session_state.page = 'authentication'  # Redirect to authentication page
+    #         return  # Exit the function immediately after setting the page
+    # else:
+    #     if st.sidebar.button("Dashboard"):
+    #         st.session_state.page = 'dashboard'
+    #         return  # Exit the function immediately after setting the page
 
     model_type = st.sidebar.selectbox(
         "Select Model",
