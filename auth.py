@@ -60,3 +60,5 @@ def authenticate_user():
             st.error("Incorrect credentials")
 
     st.write("Forgot password? [Recover](#)")  # Placeholder link for password recovery
+
+display_authentication_page()
