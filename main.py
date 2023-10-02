@@ -14,6 +14,8 @@ def display_sidebar():
         st.session_state.page = 'authentication'
         st.experimental_rerun()
 
+        
+
 def main():
       if 'page' not in st.session_state:
         st.session_state.page = 'main'  # Set default page if not set

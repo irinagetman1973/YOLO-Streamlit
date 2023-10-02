@@ -16,7 +16,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, db, auth
 import dotenv
-
+import time
 
 dotenv.load_dotenv()
 
@@ -85,8 +85,13 @@ def authenticate():
                 user_id = user.uid  
                 ref = db.reference(f'/users/{user_id}')
                 ref.set({'username': username})
+                # Store user info in session_state
+                st.session_state.user = {"username": username, "uid": user.uid}
                 st.success('Account created successfully! Please log in now.')
                 st.balloons()
+                time.sleep(3)
+                st.session_state.page = 'main'  # Redirect to main page
+                st.rerun()
             else:
                 st.error('Account creation failed. Please try again.')
 
@@ -114,7 +119,13 @@ def login_user(email, password):
         ref = db.reference(f'/users/{user_data["localId"]}')
         user_info = ref.get()
         username = user_info.get('username', 'Unknown User')
+        # Store user info in session_state
+        st.session_state.user = {"username": username, "uid": user_data["localId"]}
         st.success(f"Logged in successfully. Welcome, {username}!")
+        time.sleep(3)
+        st.session_state.page = 'main'  # Redirect to main page
+        st.rerun()
+
     else:
         st.warning('Login failed. Please check your credentials and try again.')
 

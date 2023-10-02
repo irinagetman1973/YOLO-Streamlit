@@ -2,7 +2,7 @@ from pathlib import Path
 import streamlit as st
 import config
 from utils import load_model, infer_uploaded_image, infer_uploaded_video, infer_uploaded_webcam
-# from auth import display_authentication_page
+
 from dashboard import display_dashboard
 
 from au import authenticate
