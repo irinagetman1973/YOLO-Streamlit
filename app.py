@@ -1,51 +1,21 @@
 from pathlib import Path
 import streamlit as st
-
 import config
 from utils import load_model, infer_uploaded_image, infer_uploaded_video, infer_uploaded_webcam
-from auth import display_authentication_page
+# from auth import display_authentication_page
 from dashboard import display_dashboard
 
-
-# setting page layout
-st.set_page_config(
-    page_title="Vehicle Tracking with YOLOv8",
-    page_icon="🎓",
-    layout="wide",
-    initial_sidebar_state="expanded"
-    )
+from au import authenticate
 
 
-#    ------# Initialize session state variables------------
-if 'page' not in st.session_state:
-    st.session_state.page = 'main'
 
+def display_authentication_page():
+    # Call the authenticate function from au.py
+    authenticate()
 
-def main():
-    # Set default page if not set
-    if 'page' not in st.session_state:
-        st.session_state.page = 'main'
-    
-    # Check the current page and display content accordingly
-    if st.session_state.page == 'main':
-        display_main_page()
-    elif st.session_state.page == 'authentication':
-        display_authentication_page()
-    elif st.session_state.page == 'dashboard':
-        display_dashboard()  
-    display_sidebar()
     
 
-def display_sidebar():   
 
-    if not st.session_state.get('authenticated', False):
-        if st.sidebar.button("Login/Sign Up", key="login_signup_button"):
-            st.session_state.page = 'authentication'
-            st.experimental_rerun()
-    else:
-        if st.sidebar.button("Dashboard"):
-            st.session_state.page = 'dashboard'
-            st.experimental_rerun()
 
 
 def display_main_page():
@@ -55,18 +25,12 @@ def display_main_page():
     # Sidebar
     st.sidebar.header("YOLO Models")
 
-    # if not st.session_state.get('authenticated', False):
-    #     if st.sidebar.button("Login/Sign Up"):
-    #         st.session_state.page = 'authentication'  # Redirect to authentication page
-    #         return  # Exit the function immediately after setting the page
-    # else:
-    #     if st.sidebar.button("Dashboard"):
-    #         st.session_state.page = 'dashboard'
-    #         return  # Exit the function immediately after setting the page
+    
 
     model_type = st.sidebar.selectbox(
         "Select Model",
-        config.DETECTION_MODEL_LIST
+        config.DETECTION_MODEL_LIST,
+        key='models_selectbox'
     )
 
     confidence = float(st.sidebar.slider(
@@ -104,8 +68,8 @@ def display_main_page():
 
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 
 
