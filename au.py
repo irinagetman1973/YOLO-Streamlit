@@ -146,6 +146,7 @@ def verify_user(email=None, username=None):
         st.warning('Verification failed. Please try again.')
         return
 
+if __name__ == "__main__":
+    authenticate()
 
 
-authenticate()

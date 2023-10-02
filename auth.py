@@ -62,3 +62,34 @@ def authenticate_user():
     st.write("Forgot password? [Recover](#)")  # Placeholder link for password recovery
 
 display_authentication_page()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
