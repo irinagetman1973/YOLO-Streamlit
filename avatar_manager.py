@@ -17,8 +17,34 @@ def upload_and_store_avatar(user_id):
         ref.set(avatar_url)
         
 def store_avatar(user_id, file):
-    # Implement your logic to store the avatar and return the URL
-    pass
+    # Assume you have already initialized Firebase Admin SDK as shown in previous examples
+
+    # Get a reference to the Firebase Storage service
+    bucket = storage.bucket()
+
+    # Determine the file extension based on the mime type
+    mime_type = file.type  # assuming file.type returns the mime type
+    extension = ""
+    if mime_type == "image/png":
+        extension = ".png"
+    elif mime_type == "image/jpeg":
+        extension = ".jpg"
+
+    if not extension:
+        raise ValueError("Unsupported file type")
+
+    # Create a unique file name based on user_id and file extension
+    blob = bucket.blob(f'avatars/{user_id}{extension}')
+
+    # Upload the file
+    blob.upload_from_string(file.read(), content_type=mime_type)
+
+    # Make the file publicly accessible
+    blob.make_public()
+
+    # Return the public URL to the file
+    return blob.public_url
+
 
 def get_avatar_url(user_id):
     ref = db.reference(f'/users/{user_id}/avatar')

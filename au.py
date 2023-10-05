@@ -56,6 +56,8 @@ def authenticate():
         login_email = st.text_input(':blue[email]', placeholder='enter your email', key='login_email')
         login_password = st.text_input(':blue[password]', placeholder='enter your password', type='password', key='login_password')
 
+
+        # def handle_login_bt()
         if st.button('Login'):
             login_user(login_email, login_password)
 
@@ -99,6 +101,19 @@ def authenticate():
 # -----------------------
 # User Login Function
 # -----------------------
+def handle_login_bt(user_data):
+    # Retrieve the username from Firebase Realtime Database
+    ref = db.reference(f'/users/{user_data["localId"]}')
+    user_info = ref.get()
+    username = user_info.get('username', 'Unknown User')
+    # Store user info in session_state
+    st.session_state.user = {"username": username, "uid": user_data["localId"]}
+    st.session_state['authenticated'] = True
+    
+    st.success(f"Logged in successfully. Welcome, {username}!")
+    time.sleep(3)
+    st.session_state.page = 'main'  # Redirect to main page
+    st.rerun()
 
 def login_user(email, password):
     # Load firebaseConfig from config.json
@@ -115,16 +130,18 @@ def login_user(email, password):
     response = requests.post(url, data=data)
     if response.ok:
         user_data = response.json()
-        # Retrieve the username from Firebase Realtime Database
-        ref = db.reference(f'/users/{user_data["localId"]}')
-        user_info = ref.get()
-        username = user_info.get('username', 'Unknown User')
-        # Store user info in session_state
-        st.session_state.user = {"username": username, "uid": user_data["localId"]}
-        st.success(f"Logged in successfully. Welcome, {username}!")
-        time.sleep(3)
-        st.session_state.page = 'main'  # Redirect to main page
-        st.rerun()
+        # # Retrieve the username from Firebase Realtime Database
+        # ref = db.reference(f'/users/{user_data["localId"]}')
+        # user_info = ref.get()
+        # username = user_info.get('username', 'Unknown User')
+        # # Store user info in session_state
+        # st.session_state.user = {"username": username, "uid": user_data["localId"]}
+        # st.success(f"Logged in successfully. Welcome, {username}!")
+        # time.sleep(3)
+        # st.session_state.page = 'main'  # Redirect to main page
+        # st.rerun()
+        handle_login_bt(user_data)
+        st.write(st.session_state.user)
 
     else:
         st.warning('Login failed. Please check your credentials and try again.')
