@@ -21,7 +21,7 @@ import time
 dotenv.load_dotenv()
 
 #-----------Firebase configuration & Initialization---------
-with open('C:/Users/irina/capstone/config.json') as config_file:
+with open('config.json') as config_file:
 
     config_data = json.load(config_file)
 
