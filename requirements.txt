@@ -54,3 +54,4 @@ supervision
 firebase_admin
 # pyrebase
 python-dotenv
+# firebase

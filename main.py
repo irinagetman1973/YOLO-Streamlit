@@ -27,7 +27,8 @@ def display_sidebar():
         
         user_id = st.session_state.user["uid"]
         avatar_url = get_avatar_url(user_id)
-        st.sidebar.write(f'Welcome, {st.session_state.user["username"]}')
+        # st.sidebar.write(f'Welcome, {st.session_state.user["username"]}')
+        st.sidebar.markdown(f'### Welcome, **{st.session_state.user["username"]}**!')
 
         # Check if the user has an avatar
         if avatar_url:
@@ -56,7 +57,7 @@ def display_sidebar():
         # Apply the mask to the avatar
         rounded_avatar = Image.new("RGBA", avatar.size)
         rounded_avatar.paste(avatar, mask=mask)
-        avatar_width = 100  
+        avatar_width = 64  
         # Display the rounded avatar in Streamlit
         st.sidebar.image(rounded_avatar,  width=avatar_width)
 

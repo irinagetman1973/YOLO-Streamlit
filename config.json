@@ -1,0 +1,12 @@
+{
+      "firebaseConfig" : {
+            "apiKey": "AIzaSyA-2AqmImmnGbIYEr5NQW-ZDv7ZWL-hrzk",
+            "authDomain": "capstone-c23c5.firebaseapp.com",
+            "projectId": "capstone-c23c5",
+            "databaseURL": "https://capstone-c23c5-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            "storageBucket": "capstone-c23c5.appspot.com",
+            "messagingSenderId": "322019692476",
+            "appId": "1:322019692476:web:a0e44e81bd74bf83f025b9",
+            "measurementId": "G-125EJR4M2N"
+      }
+}

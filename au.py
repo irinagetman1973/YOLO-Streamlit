@@ -21,8 +21,8 @@ import time
 dotenv.load_dotenv()
 
 #-----------Firebase configuration & Initialization---------
+with open('C:/Users/irina/capstone/config.json') as config_file:
 
-with open('config.json') as config_file:
     config_data = json.load(config_file)
 
 firebaseConfig = config_data['firebaseConfig']
@@ -47,7 +47,7 @@ if not firebase_admin._apps:
 # ------------------------------
 # User Authentication Interface
 # ------------------------------
-
+@st.cache
 def authenticate():
     col1, col2 = st.columns(2)
 
@@ -101,6 +101,7 @@ def authenticate():
 # -----------------------
 # User Login Function
 # -----------------------
+@st.cache
 def handle_login_bt(user_data):
     # Retrieve the username from Firebase Realtime Database
     ref = db.reference(f'/users/{user_data["localId"]}')
@@ -130,16 +131,6 @@ def login_user(email, password):
     response = requests.post(url, data=data)
     if response.ok:
         user_data = response.json()
-        # # Retrieve the username from Firebase Realtime Database
-        # ref = db.reference(f'/users/{user_data["localId"]}')
-        # user_info = ref.get()
-        # username = user_info.get('username', 'Unknown User')
-        # # Store user info in session_state
-        # st.session_state.user = {"username": username, "uid": user_data["localId"]}
-        # st.success(f"Logged in successfully. Welcome, {username}!")
-        # time.sleep(3)
-        # st.session_state.page = 'main'  # Redirect to main page
-        # st.rerun()
         handle_login_bt(user_data)
         st.write(st.session_state.user)
 
