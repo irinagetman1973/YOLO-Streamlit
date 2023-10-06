@@ -47,7 +47,7 @@ if not firebase_admin._apps:
 # ------------------------------
 # User Authentication Interface
 # ------------------------------
-@st.cache
+
 def authenticate():
     col1, col2 = st.columns(2)
 
@@ -101,7 +101,7 @@ def authenticate():
 # -----------------------
 # User Login Function
 # -----------------------
-@st.cache
+
 def handle_login_bt(user_data):
     # Retrieve the username from Firebase Realtime Database
     ref = db.reference(f'/users/{user_data["localId"]}')
@@ -128,11 +128,15 @@ def login_user(email, password):
         "password": password,
         "returnSecureToken": True
     }
+    # Ensure user attribute is initialized in session_state
+    if "user" not in st.session_state:
+        st.session_state["user"] = None
+
     response = requests.post(url, data=data)
     if response.ok:
         user_data = response.json()
         handle_login_bt(user_data)
-        st.write(st.session_state.user)
+        # st.write(st.session_state.user)
 
     else:
         st.warning('Login failed. Please check your credentials and try again.')
