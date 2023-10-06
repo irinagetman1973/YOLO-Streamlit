@@ -47,7 +47,7 @@ if not firebase_admin._apps:
 # ------------------------------
 # User Authentication Interface
 # ------------------------------
-
+@st.cache
 def authenticate():
     col1, col2 = st.columns(2)
 
@@ -101,6 +101,7 @@ def authenticate():
 # -----------------------
 # User Login Function
 # -----------------------
+@st.cache
 def handle_login_bt(user_data):
     # Retrieve the username from Firebase Realtime Database
     ref = db.reference(f'/users/{user_data["localId"]}')
