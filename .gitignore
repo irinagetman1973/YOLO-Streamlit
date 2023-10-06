@@ -148,4 +148,4 @@ weights/
 #generated detected videos
 results/
 firebase-credential.json
-config.json
+#config.json
