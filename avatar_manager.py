@@ -1,4 +1,13 @@
 # avatar_manager.py
+"""
+-------------------------------------------------
+   @File Name:     avatar_manager.py
+   @Author:        Irina Getman
+   @Date:          06/10/2023
+   @Description:   store and render users' avatars 
+                   from Firebase db 
+-------------------------------------------------
+"""
 
 import streamlit as st
 from firebase_admin import db, storage
