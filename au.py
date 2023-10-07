@@ -15,6 +15,8 @@ import requests
 import json
 import firebase_admin
 from firebase_admin import credentials, db, auth
+
+from firebase_admin.auth import EmailAlreadyExistsError
 import dotenv
 import time
 
@@ -49,6 +51,9 @@ if not firebase_admin._apps:
 # ------------------------------
 
 def authenticate():
+    if st.sidebar.button("Back to Main Page"):
+            st.session_state.page = 'main'
+            st.rerun()
     col1, col2 = st.columns(2)
 
     with col1:
@@ -60,6 +65,7 @@ def authenticate():
         # def handle_login_bt()
         if st.button('Login'):
             login_user(login_email, login_password)
+        
 
     with col2:
         st.subheader(':green[Sign Up]')
@@ -68,34 +74,28 @@ def authenticate():
         password = st.text_input(':blue[password]', placeholder='enter your password', type='password', key='signup_password', help='Password must be at least 6 characters long.')
 
         if st.button('Create an account'):
-            email_exists = verify_user(email=email)
-            username_exists = verify_user(username=username)
-
-            if email_exists:
-                st.error('Email is already in use.')
-                return
-            if username_exists:
-                st.error('Username is already taken.')
-                return
             
-            user = auth.create_user(email=email, password=password)
-            
-           
+            try:
+                user = auth.create_user(email=email, password=password)
             # If user creation was successful, store the username in Firebase Realtime Database
-            if user:
+                if user:
                 
-                user_id = user.uid  
-                ref = db.reference(f'/users/{user_id}')
-                ref.set({'username': username})
-                # Store user info in session_state
-                st.session_state.user = {"username": username, "uid": user.uid}
-                st.success('Account created successfully! Please log in now.')
-                st.balloons()
-                time.sleep(3)
-                st.session_state.page = 'main'  # Redirect to main page
-                st.rerun()
-            else:
-                st.error('Account creation failed. Please try again.')
+                        user_id = user.uid  
+                        ref = db.reference(f'/users/{user_id}')
+                        ref.set({'username': username})
+                        # Store user info in session_state
+                        st.session_state.user = {"username": username, "uid": user.uid}
+                        st.success('Account created successfully! Please log in now.')
+                        st.balloons()
+                        time.sleep(3)
+                        st.session_state.page = 'main'  # Redirect to main page
+                        st.rerun()
+                
+            except EmailAlreadyExistsError:
+                    st.error('The email address is already in use. Please use a different email address.')
+            except Exception as e:
+                    st.error(f'An error occurred: {e}')
+          
 
 
 # -----------------------
@@ -136,38 +136,12 @@ def login_user(email, password):
     if response.ok:
         user_data = response.json()
         handle_login_bt(user_data)
-        # st.write(st.session_state.user)
+        
 
     else:
         st.warning('Login failed. Please check your credentials and try again.')
 
-def verify_user(email=None, username=None):
-    # Load firebaseConfig from config.json
-    with open('config.json') as config_file:
-        config_data = json.load(config_file)
-    firebaseConfig = config_data['firebaseConfig']
 
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={firebaseConfig['apiKey']}"
-    if email:
-        data = {"email": [email]}
-    elif username:
-        
-        data = {"username": [username]}
-    else:
-        st.warning('Provide either email or username for verification.')
-        return
-
-    headers = {'Content-Type': 'application/json'}
-    response = requests.post(url, headers=headers, json=data)
-    if response.ok:
-        user_data = response.json()
-        if user_data['users']:
-            return True  # Email or Username exists
-        else:
-            return False  # Email or Username doesn't exist
-    else:
-        st.warning('Verification failed. Please try again.')
-        return
 
 if __name__ == "__main__":
     authenticate()

@@ -19,10 +19,19 @@ def display_authentication_page():
 
 
 def display_main_page():
-    st.title("Welcome")
-    st.header("Detect with _Confidence_, Powered by **:green[YOLO]**!")
+    
+    st.markdown("""
+        <style>
+            .green {
+                color: green;
+                font-weight: bold;
+                font-size: larger;
+            }
+        </style>
 
-    # Sidebar
+        #  <span class="green">_**YOLO**_</span> _models evaluation_ 
+        """, unsafe_allow_html=True)
+    # Sideba
     st.sidebar.header("YOLO Models")
 
     
