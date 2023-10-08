@@ -13,6 +13,7 @@ torch>=1.7.0
 torchvision>=0.8.1
 tqdm>=4.64.0
 easydict
+plotly
 
 # Logging -------------------------------------
 # tensorboard>=2.13.0
@@ -22,9 +23,10 @@ easydict
 
 #deployment
 streamlit
+streamlit-extras
 tensorflow
 streamlit-authenticator==0.2.2
-
+streamlit-scrollable-textbox
 
 # Plotting ------------------------------------
 pandas>=1.1.4

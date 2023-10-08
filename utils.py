@@ -12,19 +12,63 @@ from ultralytics import YOLO
 import streamlit as st
 import cv2
 from PIL import Image
-# import imageio
+import streamlit_scrollable_textbox as stx
 import tempfile
 import config
 import numpy as np
 from results import Results
 import os
 import datetime
-
-# import supervision as sv
+import io
+import base64
+import plotly.graph_objects as go
 import os
+
+
 os.environ['TMPDIR'] = 'C:\\Users\\irina\\tmp'
 
-
+# Function to create a figure for Plotly
+def create_fig(image, detected=False):
+    # Convert the image to a data URI
+    buffer = io.BytesIO()
+    image.save(buffer, format='PNG')
+    image_data_uri = base64.b64encode(buffer.getvalue()).decode()
+    
+    # Create a figure
+    fig = go.Figure()
+    fig.add_layout_image(
+        dict(
+            source=f"data:image/png;base64,{image_data_uri}",
+            x=0,
+            y=image.size[1],
+            xref="x",
+            yref="y",
+            sizex=image.size[0],
+            sizey=image.size[1],
+            layer="below"
+        )
+    )
+    
+    fig.update_layout(
+        xaxis_range=[0, image.size[0]],
+        yaxis_range=[0, image.size[1]],
+        template="plotly_white",
+        margin=dict(l=0, r=0, b=0, t=0),
+        xaxis=dict(showticklabels=False, showgrid=False, zeroline=True),
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=True),
+        annotations=[
+            dict(
+                x=0.5,
+                y=-0.1,
+                showarrow=False,
+                text="Detected Image" if detected else "Original Image",
+                xref="paper",
+                yref="paper"
+            )
+        ]
+    )
+    
+    return fig
 
 def _display_detected_frames(conf, model, st_count, st_frame, image):
     """
@@ -35,8 +79,7 @@ def _display_detected_frames(conf, model, st_count, st_frame, image):
     :param image (numpy array): A numpy array representing the video frame.
     :return: None
     """
-    # Resize the image to a standard size
-    #image = cv2.resize(image, (720, int(720 * (9 / 16))))
+    
 
     # Predict the objects in the image using YOLOv8 model
     res = model.predict(image, conf=conf)
@@ -74,6 +117,34 @@ def load_model(model_path):
     model = YOLO(model_path)
     return model
 
+def scale_image(image, max_width=596, max_height=400):
+    """
+    Scale the input image while maintaining the aspect ratio, only if 
+    the width is greater than max_width or the height is greater than max_height.
+    :param image: Input image.
+    :param max_width: The maximum width for the image.
+    :param max_height: The maximum height for the image.
+    :return: Scaled image.
+    """
+    width, height = image.size
+    
+   
+    # Only scale if either dimension is larger than the max dimensions
+    if width > max_width or height > max_height:
+        # Determine the scaling factor such that the aspect ratio is maintained
+        scaling_factor = min(max_width / width, max_height / height)
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+
+        # Resize the image
+        
+        return image.resize((new_width, new_height))
+
+    # If no scaling is needed, return the original image
+    return image
+
+
+
 def infer_uploaded_image(conf, model):
     """
     Execute inference for uploaded image
@@ -85,242 +156,80 @@ def infer_uploaded_image(conf, model):
         label="Choose an image...",
         type=("jpg", "jpeg", "png", 'bmp', 'webp')
     )
-
+    st.markdown("""
+      ### Instructions:
+      1. **Original Image:** On the left is the original image you provided.
+      2. **Detected Image:** On the right is the image with detected objects highlighted.
+         
+         * You can zoom in/out and pan the image to see detections more clearly.
+      """)
     col1, col2 = st.columns(2)
+    boxes = None
 
     with col1:
         if source_img:
             uploaded_image = Image.open(source_img)
-            # adding the uploaded image to the page with caption
-            st.image(
-                image=source_img,
-                caption="Uploaded Image",
-                use_column_width=True
-            )
-        if source_img:
+            fig_orig = create_fig(uploaded_image)
+
+            # Display the original image using Plotly
+            st.plotly_chart(fig_orig, use_container_width=True)
+            st.markdown("**Original Image**")
+        if  source_img:
             if st.button("Execution"):
                 with st.spinner("Running..."):
-                    res = model.predict(uploaded_image, conf=conf)
-                    boxes = res[0].boxes
+                    detected_image = model.predict(uploaded_image, conf=conf)
+                    boxes = detected_image[0].boxes
 
                 with col2:
-                    st.image(res[0].plot()[:, :, ::-1],
-                             caption="Detected Image",
-                             use_column_width=True)
+                   if boxes:
+                     # Get the plotted image with detections from the Results object
+                    detected_img_arr = detected_image[0].plot()[:, :, ::-1]  # Assuming this returns a numpy array
+                    # Convert the numpy array to a PIL Image object
+                    detected_image = Image.fromarray(cv2.cvtColor(detected_img_arr, cv2.COLOR_BGR2RGB))
 
-                    try:
-                        with st.expander("Detection Results"):
-                            if boxes is not None:
-                                count_dict = {}
-                                for box in boxes:
-                                    class_id = model.names[box.cls[0].item()]
-                                    cords = box.xyxy[0].tolist()
-                                    cords = [round(x) for x in cords]
-                                    conf = round(box.conf[0].item(), 2)
-                                    st.write("Object type:", class_id)
-                                    st.write("Coordinates:", cords)
-                                    st.write("Probability:", conf)
-                                    st.write("---")
-                                    
-                                    # Add to count dictionary
-                                    if class_id in count_dict:
-                                        count_dict[class_id] += 1
-                                    else:
-                                        count_dict[class_id] = 1
-                                
-                                # Print out counts of each object type
-                                for object_type, count in count_dict.items():
-                                    st.write(f"Count of {object_type}: {count}")
-                            else:
-                                st.write("No results found.")
-                    except Exception as ex:
-                        st.write("Error occurred during inference.")
-                        st.write(ex)
+                    # Now pass the image object to create_fig()
+                    fig_detected = create_fig(detected_image, detected=True)
 
+                    # Display the detected image using Plotly
+                    st.plotly_chart(fig_detected, use_container_width=True)
+                    st.markdown("**Detected Image**")
 
+        if boxes :
+            
+            detection_results = ""
+            count_dict = {}
+            for box in boxes:
+                    class_id = model.names[box.cls[0].item()]
+                    cords = box.xyxy[0].tolist()
+                    cords = [round(x) for x in cords]
+                    conf = round(box.conf[0].item(), 2)
 
+                    detection_results += f"<b>Object type:</b> {class_id}<br><b>Coordinates:</b> {cords}<br><b>Probability:</b> {conf}<br>---<br>"
+                    if class_id in count_dict:
+                        count_dict[class_id] += 1
+                    else:
+                        count_dict[class_id] = 1
+            for object_type, count in count_dict.items():
+                    detection_results += f"<b>Count of {object_type}:</b> {count}<br>"
 
-# def infer_uploaded_video(conf, model):
-#     """
-#     Execute inference for uploaded video
-#     :param conf: Confidence of YOLOv8 model
-#     :param model: An instance of the `YOLOv8` class containing the YOLOv8 model.
-#     :return: None
-#     """
-#     source_video = st.sidebar.file_uploader(label="Choose a video...")
-#     col1, col2 = st.columns(2)
+            scrollable_textbox = f"""
+                <div style="
+                    font-family: 'monospace';
+                    overflow-y: scroll;
+                    border: 1px solid #000;
+                    padding: 10px;
+                    width: 595px;
+                    height: 300px;
+                ">
+                    {detection_results}
+                </div>
+            """
 
-#     with col1:
-#         st.video(source_video)
-
-#     with col2:
-#         if source_video:
-#             if st.button("Execution"):
-#                 with st.spinner("Running..."):
-#                     try:
-#                         tfile = tempfile.NamedTemporaryFile()
-#                         tfile.write(source_video.read())
-#                         vid_cap = cv2.VideoCapture(tfile.name)
-#                         st_count = st.empty()
-#                         st_frame = st.empty()
-#                         if not vid_cap.isOpened():
-#                             raise ValueError("Failed to open video capture.")
+        # Display the scrollable textbox using st.markdown
+            st.markdown(scrollable_textbox, unsafe_allow_html=True)
 
 
-#                         execution_count = 0
 
-#                         output_dir = "results"
-#                         os.makedirs(output_dir, exist_ok=True)
-#                         now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-#                         output_file = os.path.join(output_dir, f"output_{now}.mp4")
-
-#                         # Define the resolution
-#                         width = 1280
-#                         height = 720
-
-#                         # Create an instance of cv2.VideoCapture
-#                         cap = cv2.VideoCapture(0)
-#                         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-#                         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-#                         # Define the video codec and create the VideoWriter object
-#                         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-#                         frame_rate = 7.0
-#                         writer = cv2.VideoWriter(output_file, fourcc, frame_rate, (width, height), isColor=True)
-
-#                         # Customize the bounding box
-#                         box_annotator = sv.BoxAnnotator(
-#                             thickness=2,
-#                             text_thickness=2,
-#                             text_scale=1
-#                         )
-
-#                         while True:
-#                             ret, frame = vid_cap.read()
-                            
-#                             st.write(ret, frame)
-#                             st.write(frame.shape)
-#                             st.write(frame)
-
-#                             if not ret:
-#                                 break
-#                             # Perform detection on the frame
-#                             result = model(frame, agnostic_nms=True)[0]
-#                             detections = sv.Detections.from_yolov8(result)
-#                             labels = [
-#                                 f"{model.model.names[class_id]} {confidence:0.2f}"
-#                                 for _, confidence, class_id, _
-#                                 in detections
-#                             ]
-#                             frame = box_annotator.annotate(
-#                                 scene=frame,
-#                                 detections=detections,
-#                                 labels=labels
-#                             )
-
-#                             # Write the frame to the output video file
-#                             writer.write(frame)
-
-#                             # Display the frame in Streamlit
-#                             st.image(frame, channels="BGR")
-
-#                             execution_count += 1
-
-#                         cap.release()  # Release the video capture
-#                         writer.release()  # Release the VideoWriter
-#                         cv2.destroyAllWindows()
-
-#                         # Display the total number of executions
-#                         st.write(f"The code was executed {execution_count} times.")
-
-#                         # Display the result video
-#                         st.video(output_file)
-
-#                     except Exception as e:
-#                         st.error(f"Error loading video: {e}")
-
-# def infer_uploaded_video(conf, model):
-#     """
-#     Execute inference for uploaded video
-#     :param conf: Confidence of YOLOv8 model
-#     :param model: An instance of the `YOLOv8` class containing the YOLOv8 model.
-#     :return: None
-#     """
-#     source_video = st.sidebar.file_uploader(label="Choose a video...")
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         st.video(source_video)
-
-#     with col2:
-#         if source_video:
-#             if st.button("Execution"):
-#                 with st.spinner("Running..."):
-#                     try:
-#                         tfile = tempfile.NamedTemporaryFile()
-#                         tfile.write(source_video.read())
-                        
-#                         vstream = imageio.get_reader(tfile.name)
-                        
-#                         # Get the total number of frames
-#                         num_frames = vstream.get_length()
-                        
-#                         # Create a progress bar
-#                         progress_bar = st.progress(0)
-                        
-#                         frames = []
-#                         for i, frame in enumerate(vstream):
-#                             # Update the progress bar
-#                             progress_bar.progress(i / num_frames)
-                            
-#                             # Convert to PIL image
-#                             pil_image = Image.fromarray(frame)
-                            
-#                             # Perform inference
-#                             res = model.predict(pil_image, conf=conf)
-#                             boxes = res[0].boxes
-                            
-#                             # Annotate and append to frames
-#                             frame = res[0].plot()[:, :, ::-1]
-#                             frames.append(frame)
-                            
-#                             # Print results
-#                             if boxes is not None:
-#                                 count_dict = {}
-#                                 for box in boxes:
-#                                     class_id = model.names[box.cls[0].item()]
-#                                     cords = box.xyxy[0].tolist()
-#                                     cords = [round(x) for x in cords]
-#                                     conf = round(box.conf[0].item(), 2)
-#                                     st.write("Object type:", class_id)
-#                                     st.write("Coordinates:", cords)
-#                                     st.write("Probability:", conf)
-#                                     st.write("---")
-                                    
-#                                     # Add to count dictionary
-#                                     if class_id in count_dict:
-#                                         count_dict[class_id] += 1
-#                                     else:
-#                                         count_dict[class_id] = 1
-                                
-#                                 # Print out counts of each object type
-#                                 for object_type, count in count_dict.items():
-#                                     st.write(f"Count of {object_type}: {count}")
-                            
-#                         # Complete the progress bar
-#                         progress_bar.progress(1.0)
-                        
-#                         # Write frames to output video
-#                         output_dir = "results"
-#                         os.makedirs(output_dir, exist_ok=True)
-#                         now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-#                         output_file = os.path.join(output_dir, f"output_{now}.mp4")
-#                         imageio.mimwrite(output_file, frames, fps=24)
-
-#                         st.video(output_file)
-
-#                     except Exception as e:
-#                         st.error(f"Error processing video: {e}")
 
 
 def infer_uploaded_video(conf, model):
