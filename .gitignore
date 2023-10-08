@@ -149,3 +149,4 @@ weights/
 results/
 firebase-credential.json
 #config.json
+secrets.toml
