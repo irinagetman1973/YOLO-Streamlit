@@ -23,32 +23,41 @@ import time
 dotenv.load_dotenv()
 
 #-----------Firebase configuration & Initialization---------
-with open('config.json') as config_file:
+# with open('config.json') as config_file:
 
-    config_data = json.load(config_file)
+#     config_data = json.load(config_file)
 
-firebaseConfig = config_data['firebaseConfig']
+# firebaseConfig = config_data['firebaseConfig']
 
-# cred = credentials.Certificate('C:\\Users\\irina\\capstone\\capstone-c23c5-4e7a43be2c53.json')
+# # cred = credentials.Certificate('C:\\Users\\irina\\capstone\\capstone-c23c5-4e7a43be2c53.json')
 
-cred_path = os.environ.get('FIREBASE_CERT_PATH')
-# st.write(type(cred_path))
-cred_path = cred_path.strip('"') if isinstance(cred_path, str) else cred_path
-
-
-
-db_url = os.environ.get('FIREBASE_DB_URL')
-if db_url is None:
-    raise ValueError("Environment variable FIREBASE_DB_URL is not set")
-db_url = db_url.strip('"')
+# cred_path = os.environ.get('FIREBASE_CERT_PATH')
+# # st.write(type(cred_path))
+# cred_path = cred_path.strip('"') if isinstance(cred_path, str) else cred_path
 
 
-cred = credentials.Certificate(cred_path)
+
+# db_url = os.environ.get('FIREBASE_DB_URL')
+# if db_url is None:
+#     raise ValueError("Environment variable FIREBASE_DB_URL is not set")
+# db_url = db_url.strip('"')
+
+
+# cred = credentials.Certificate(cred_path)
+# if not firebase_admin._apps:
+#     firebase_admin.initialize_app(cred, {
+#         'databaseURL': db_url
+#     })
+#----------------------------------------------
+# Load your Firebase configuration from Streamlit's secrets management service
+firebaseConfig = st.secrets["firebaseConfig"]
+
+# If the Firebase app isn't already initialized, do so:
 if not firebase_admin._apps:
+    cred = credentials.Certificate(firebaseConfig["cert_path"])
     firebase_admin.initialize_app(cred, {
-        'databaseURL': db_url
+        'databaseURL': firebaseConfig["db_url"]
     })
-
 # ------------------------------
 # User Authentication Interface
 # ------------------------------
