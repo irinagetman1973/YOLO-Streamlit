@@ -50,13 +50,23 @@ dotenv.load_dotenv()
 #     })
 #----------------------------------------------
 # Load your Firebase configuration from Streamlit's secrets management service
-firebaseConfig = st.secrets["firebaseConfig"]
+# firebaseConfig = st.secrets["firebaseConfig"]
 
-# If the Firebase app isn't already initialized, do so:
+# # If the Firebase app isn't already initialized, do so:
+# if not firebase_admin._apps:
+#     cred = credentials.Certificate(firebaseConfig["cert_path"])
+#     firebase_admin.initialize_app(cred, {
+#         'databaseURL': firebaseConfig["db_url"]
+#     })
+firebase_credentials = {
+    'cert_path': st.secrets["firebaseConfig"]["cert_path"],
+    'databaseURL': st.secrets["firebaseConfig"]["db_url"]
+}
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebaseConfig["cert_path"])
+    cred = credentials.Certificate(firebase_credentials["cert_path"])
     firebase_admin.initialize_app(cred, {
-        'databaseURL': firebaseConfig["db_url"]
+        'databaseURL': firebase_credentials["databaseURL"]
     })
 # ------------------------------
 # User Authentication Interface
