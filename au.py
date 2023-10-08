@@ -33,8 +33,9 @@ firebaseConfig = config_data['firebaseConfig']
 
 cred_path = os.environ.get('FIREBASE_CERT_PATH')
 # st.write(type(cred_path))
+cred_path = cred_path.strip('"') if isinstance(cred_path, str) else cred_path
 
-cred_path = cred_path.strip('"')  # This line will remove any double quotes from the beginning and end of cred_path
+
 
 db_url = os.environ.get('FIREBASE_DB_URL')
 if db_url is None:
