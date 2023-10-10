@@ -57,3 +57,4 @@ firebase_admin
 # pyrebase
 python-dotenv
 # firebase
+moviepy

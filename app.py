@@ -20,18 +20,7 @@ def display_authentication_page():
 
 def display_main_page():
     
-    st.markdown("""
-        <style>
-            .green {
-                color: green;
-                font-weight: bold;
-                font-size: larger;
-            }
-        </style>
-
-        #  <span class="green">_**YOLO**_</span> _models evaluation_ 
-        """, unsafe_allow_html=True)
-    # Sidebar
+        # Sidebar
     st.sidebar.header("YOLO Models")
 
     
@@ -62,19 +51,68 @@ def display_main_page():
 
     st.sidebar.header("Image/Video Upload")
     source_selectbox = st.sidebar.selectbox(
-        "Select Source",
-        config.SOURCES_LIST
-    )
+            "Select Source",
+            config.SOURCES_LIST
+        )
 
-    if source_selectbox == config.SOURCES_LIST[0]:  # Image
-        infer_uploaded_image(confidence, model)
-    elif source_selectbox == config.SOURCES_LIST[1]:  # Video
-        infer_uploaded_video(confidence, model)
-    elif source_selectbox == config.SOURCES_LIST[2]:  # Webcam
-        infer_uploaded_webcam(confidence, model)
-    else:
-        st.error("Currently only 'Image' and 'Video' source are implemented")
+    uploaded_file = st.sidebar.file_uploader(label="Choose a file...")
 
+        # Check if a file has been uploaded or instructions have been displayed before:
+    if uploaded_file is None :
+            st.session_state['instructions_displayed'] = True  # Set to True so instructions are not displayed again
+            st.markdown("""
+            <style>
+                .green {
+                    color: green;
+                    font-weight: bold;
+                    font-size: larger;
+                }
+            </style>
+
+            #  <span class="green">_**YOLO**_</span> _models evaluation app_
+
+            Welcome to the YOLO models evaluation app! This platform allows you to test and evaluate different YOLOv8 models on your own data. 
+            Here's how to get started:
+
+            **Step 1: Choose a YOLOv8 Model:**
+            In the sidebar, you'll find a dropdown box where you can select from different YOLOv8 models: 8l, 8m, 8s, 8x, and 8n. 
+            Here's a brief on what differentiates them (as per Ultralytics documentation):
+            
+            - **8l:** This model has a larger size and offers higher accuracy.
+            - **8m:** A medium-sized model offering a good balance between size, speed, and accuracy.
+            - **8s:** A smaller model, faster but with slightly lower accuracy.
+            - **8x:** An extended model with more layers, providing higher accuracy but at the cost of speed.
+            - **8n:** A nominal model that provides a balance between size and accuracy.
+
+            **Step 2: Adjust Confidence Score:**
+            Adjust the confidence score using the slider in the sidebar. A higher confidence score will result in fewer detections but with higher certainty.
+
+            **Step 3: Select Data Type:**
+            Choose the type of data you'd like the model to process: image, video, or webcam feed, from the dropdown box.
+
+            **Step 4: Upload Your File:**
+            Use the file uploader to select the file from your local machine.
+
+            Explore and have fun with real-time object detection!
+            
+            """, unsafe_allow_html=True)
+
+    # if uploaded_file:
+    #     if source_selectbox == config.SOURCES_LIST[0]:  # Image
+    #         infer_uploaded_image(confidence, model)
+    #     elif source_selectbox == config.SOURCES_LIST[1]:  # Video
+    #         infer_uploaded_video(confidence, model)
+    #     else:
+    #         st.error("Currently only 'Image' and 'Video' source are implemented")
+    if uploaded_file:
+        if source_selectbox == config.SOURCES_LIST[0]:  # Image
+            infer_uploaded_image(confidence, model, uploaded_file)
+        elif source_selectbox == config.SOURCES_LIST[1]:  # Video
+            infer_uploaded_video(confidence, model, uploaded_file)
+    # else:
+    #     st.error("Please upload a file.")
+
+    
 
 
 # if __name__ == "__main__":
