@@ -72,21 +72,46 @@ def display_main_page():
 
         # Check if a file has been uploaded or instructions have been displayed before:
     if uploaded_file is None :
-            st.session_state['instructions_displayed'] = True  # Set to True so instructions are not displayed again
-            col1, col2 = st.columns([0.6, 0.4])  # Create a 2-column layout with equal width for each column
+            st.session_state['instructions_displayed'] = True  
+            
+            lottie = """
+            <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+            <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
+            """
+            st.markdown("""
+                <style>
+                    iframe {
+                        position: fixed;
+                        top: 16rem;
+                        bottom: 0;
+                        left: 205;
+                        right: 0;
+                        margin: auto;
+                        z-index=-1;
+                    }
+                </style>
+                """, unsafe_allow_html=True
+            )
+
+
+            st.components.v1.html(lottie, width=1110, height=1110)
+
+            st.title("Welcome to the :green[**_YOLO_**] models evaluation app!")
+            st.divider()
+
+            col1, col2 = st.columns([0.7, 0.3])  # Create a 2-column layout with equal width for each column
 
             with col1:
                     
                   # Title
-                    st.header("Welcome to the :green[**YOLO**] models evaluation app!")
-                    st.divider()
+                    
 
                     # Step 1
                     st.write(":one: :blue[**Choose a YOLOv8 Model:**]")
                     st.write("""
                     In the sidebar, you'll find a dropdown box where you can select from different YOLOv8 models:
                     - :green[**8l:**] This model has a larger size and offers higher accuracy.
-                    - :green[**8m:**]A medium-sized model offering a good balance between size, speed, and accuracy.
+                    - :green[**8m:**] A medium-sized model offering a good balance between size, speed, and accuracy.
                     - :green[**8s:**] A smaller model, faster but with slightly lower accuracy.
                     - :green[**8x:**] An extended model with more layers, providing higher accuracy but at the cost of speed.
                     - :green[**8n:**] A nominal model that provides a balance between size and accuracy.
@@ -102,7 +127,7 @@ def display_main_page():
 
                     # Step 3
                     st.write(":three: :blue[**Select Data Type:**]")
-                    st.write("Choose the type of data you'd like the model to process: image, video, or webcam feed, from the dropdown box.")
+                    st.write("Choose the type of data you'd like the model to process: image or video from the dropdown box.")
                     st.divider()
 
                     # Step 4
@@ -112,29 +137,19 @@ def display_main_page():
 
                     st.write("Explore and have fun with real-time object detection! :green_heart:")
 
+                    st.divider()
+
+                    # lottie_file_content = load_lottie_file("animation_flag.json")
+                    # st_lottie(lottie_file_content, width=100, speed=1) 
 
 
-            with col2:
+            
                 
                 
-                # Create an empty space of a specific size using HTML in st.markdown
-                st.markdown(
-                    """
-                    <style>
-                        .empty-container {
-                            width: 100%;
-                            height: 100px;  # Adjust the height to your needs
-                        }
-                    </style>
-                    <div class="empty-container"></div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                lottie_file = load_lottie_file("animation_sphere.json")
                 
-                st_lottie(lottie_file, speed=1)
-            lottie_file_content = load_lottie_file("animation_flag.json")
-            st_lottie(lottie_file_content, width=200, speed=1)  
+                
+                
+             
    
     if uploaded_file:
         if source_selectbox == config.SOURCES_LIST[0]:  # Image
