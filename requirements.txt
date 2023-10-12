@@ -27,6 +27,7 @@ streamlit-extras
 tensorflow
 streamlit-authenticator==0.2.2
 streamlit-scrollable-textbox
+streamlit-lottie
 
 # Plotting ------------------------------------
 pandas>=1.1.4

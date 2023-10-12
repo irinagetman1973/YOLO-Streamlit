@@ -211,8 +211,8 @@ def infer_uploaded_image(conf, model, uploaded_file):
                                         overflow-y: scroll;
                                         border: 1px solid #000;
                                         padding: 10px;
-                                        width: 595px;
-                                        height: 300px;
+                                        width: 500px;
+                                        height: 400px;
                                     ">
                                         {detection_results}
                                     </div>
@@ -231,18 +231,18 @@ def infer_uploaded_image(conf, model, uploaded_file):
                             """)        
 
 
-def infer_uploaded_video(conf, model):
-    source_video = st.sidebar.file_uploader(label="Choose a video...")
+def infer_uploaded_video(conf, model,uploaded_file):
+    
 
-    if source_video is not None:
+    if uploaded_file is not None:
         tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-        tfile.write(source_video.read())
+        tfile.write(uploaded_file.read())
         tfile.close()
 
         cl1, cl2, cl3, cl4 = st.columns([0.25, 0.1, 0.25, 0.4])
 
         with cl1:
-            col1_width = st.slider('Adjust input video size', min_value=0.0, max_value=0.5, value=0.25, step=0.05)
+            col1_width = st.slider('Adjust input video size', min_value=0.0, max_value=0.45, value=0.25, step=0.05)
 
         remaining_width = 1.0 - col1_width * 2
 

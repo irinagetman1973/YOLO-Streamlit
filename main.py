@@ -13,9 +13,11 @@ from au import authenticate
 from app import  display_main_page
 from avatar_manager import  get_avatar_url, store_avatar
 import time
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw
 import requests
 from io import BytesIO
+
+
 
 #-------------Page Configuration-------------------
 st.set_page_config(
@@ -91,23 +93,48 @@ def display_sidebar():
         #     st.session_state.page = 'dashboard'
         #     st.rerun()
 
-        
+
+
+def display_footer():
+    st.markdown(
+        """
+        <style>
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color: #f1f1f1;
+                text-align: center;
+                padding: 10px;
+            }
+        </style>
+        <div class="footer">
+            <p>&copy; 2023 Atomic Habits | Email: <a href="mailto:atomichabitsforlife@gmail.com">atomichabitsforlife@gmail.com</a> | 
+            LinkedIn: <a href="https://www.linkedin.com/in/irina-getman-16871b165/" target="_blank">Irina Getman</a></p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
 def main():
+  
       
-      if 'page' not in st.session_state:
+    if 'page' not in st.session_state:
         st.session_state.page = 'main'  # Set default page if not set
+    display_sidebar()  # Display the sidebar
+        
 
-      display_sidebar()  # Display the sidebar
-      # display_main_page()
-
-      if st.session_state.page == 'authentication':
+    if st.session_state.page == 'authentication':
         authenticate()  # This calls the authenticate function from au.py
-      elif st.session_state.page == 'main':
+    elif st.session_state.page == 'main':
         display_main_page()
       # elif st.session_state.page == 'dashboard':
       #   display_dashboard()  
-        
+        # Footer
+    display_footer()
+
+      
 
 if __name__ == "__main__":
     main()
