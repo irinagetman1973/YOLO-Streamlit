@@ -16,7 +16,7 @@ import streamlit_scrollable_textbox as stx
 import tempfile
 import config
 import numpy as np
-from results import Results
+
 import os
 import datetime
 import io
