@@ -111,7 +111,7 @@ def display_main_page():
                     st.write("""
                     In the sidebar, you'll find a dropdown box where you can select from different YOLOv8 models:
                     - :green[**8l:**] This model has a larger size and offers higher accuracy.
-                    - :green[**8m:**] A medium-sized model offering a good balance between size, speed, and accuracy.
+                    - :green[**8m:**] yA medium-sized model offering a good balance between size, speed, and accuracy.
                     - :green[**8s:**] A smaller model, faster but with slightly lower accuracy.
                     - :green[**8x:**] An extended model with more layers, providing higher accuracy but at the cost of speed.
                     - :green[**8n:**] A nominal model that provides a balance between size and accuracy.
