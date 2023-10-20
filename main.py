@@ -16,12 +16,12 @@ import time
 from PIL import Image, ImageDraw
 import requests
 from io import BytesIO
-
+from dashboard import display_dashboard
 
 
 #-------------Page Configuration-------------------
 st.set_page_config(
-    page_title="Vehicle Tracking with YOLOv8",
+    page_title="YOLO app",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -80,18 +80,31 @@ def display_sidebar():
         if st.sidebar.button("Logout", key="logout_button"):
             st.session_state.pop('user', None)  # Remove user info from session_state
             st.session_state.authenticated = False  # Set authenticated state to False
-            st.sidebar.success('Logged out successfully.')
+            st.sidebar.info('Logged out successfully.')
             time.sleep(2)
             st.session_state.page = 'main'  # Redirect to main page
             st.rerun()
+        
+        if st.session_state.page != 'main':
+            if st.sidebar.button("Back to Main Page"):
+                st.session_state.page = 'main'
+                st.rerun()
 
-        # if st.sidebar.button("Back to Main Page"):
-        #     st.session_state.page = 'main'
-        #     st.rerun()
+        
+        if st.session_state.page != 'dashboard':
+            if st.sidebar.button("Dashboard"):
+                st.session_state.page = 'dashboard'
+                st.rerun()
 
-        # if st.sidebar.button("Dashboard"):
-        #     st.session_state.page = 'dashboard'
-        #     st.rerun()
+# Function to create a rounded avatar image
+def create_rounded_avatar(avatar):
+    mask = Image.new("L", avatar.size)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0) + avatar.size, fill=255)
+
+    rounded_avatar = Image.new("RGBA", avatar.size)
+    rounded_avatar.paste(avatar, mask=mask)
+    return rounded_avatar
 
 
 
@@ -129,9 +142,9 @@ def main():
         authenticate()  # This calls the authenticate function from au.py
     elif st.session_state.page == 'main':
         display_main_page()
-      # elif st.session_state.page == 'dashboard':
-      #   display_dashboard()  
-        # Footer
+    elif st.session_state.page == 'dashboard':
+        display_dashboard()  
+        # ------Footer------
     display_footer()
 
       

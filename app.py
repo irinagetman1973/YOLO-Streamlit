@@ -1,10 +1,10 @@
 from pathlib import Path
 import streamlit as st
 import config
-from utils import load_model, infer_uploaded_image, infer_uploaded_video, infer_uploaded_webcam
+from utils import load_model, infer_uploaded_image, infer_uploaded_video
 from streamlit_lottie import st_lottie
 import requests
-from dashboard import display_dashboard
+
 import json
 from au import authenticate
 
@@ -139,8 +139,7 @@ def display_main_page():
 
                     st.divider()
 
-                    # lottie_file_content = load_lottie_file("animation_flag.json")
-                    # st_lottie(lottie_file_content, width=100, speed=1) 
+                    
 
 
             

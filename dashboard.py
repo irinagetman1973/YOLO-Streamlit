@@ -1,5 +1,8 @@
 import streamlit as st
 import time
+from comparison import compare_models_function
+import config
+
 
 # Placeholder for stored results. 
 stored_results = [
@@ -8,25 +11,67 @@ stored_results = [
 ]
 
 def display_dashboard():
-    st.subheader("Dashboard")
+    
 
-    # Dashboard sections
-    dashboard_sections = ["Model Fine-Tuning", "Results Access", "Query Tool", "Entry Management", "Feedback Section"]
-    section = st.sidebar.selectbox("Choose a section", dashboard_sections, key="dashboard_section_selectbox")
+    lottie = """
+          <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+          <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
+          """
+    st.markdown("""
+        <style>
+            iframe {
+                position: fixed;
+                top: 16rem;
+                bottom: 0;
+                left: 205;
+                right: 0;
+                margin: auto;
+                z-index=-1;
+            }
+        </style>
+        """, unsafe_allow_html=True
+    )
 
-    if section == "Model Fine-Tuning":
-      st.write("Fine-Tune Your YOLO Model")
 
-        # Sliders for model parameters
-      learning_rate = st.slider("Learning Rate", min_value=0.0001, max_value=0.1, value=0.001, step=0.0001)
-      batch_size = st.slider("Batch Size", min_value=1, max_value=128, value=32, step=1)
-      epochs = st.slider("Epochs", min_value=1, max_value=100, value=10, step=1)
+    st.components.v1.html(lottie, width=1110, height=1110)
 
-        # Fine-tune button
-      if st.button("Fine-Tune Model"):
-            # Placeholder logic for fine-tuning. In a real-world scenario, you'd use these parameters to adjust/train the model.
-            st.write(f"Fine-tuning model with Learning Rate: {learning_rate}, Batch Size: {batch_size}, and Epochs: {epochs}")
-            st.success("Model fine-tuned successfully!")
+    
+    
+
+    dashboard_sections = ["Compare models", "Results Access", "Query Tool", "Entry Management", "Feedback Section"]
+
+        # By default, the section is set to None to show the instruction page.
+    section = st.session_state.get('dashboard_section', "")
+
+        # Render the selectbox and store the choice in 'section'
+    section = st.sidebar.selectbox("Choose a section to continue:", [""] + dashboard_sections, key="dashboard_section_selectbox", format_func=lambda x: "Select a section..." if x == "" else x)
+
+    st.session_state.dashboard_section = section
+
+    if not section:  # When the selection is empty
+        st.write("## Welcome to the Dashboard!")
+        st.divider()
+        st.write("""
+        Here, you can manage and view the results, fine-tune your model, and provide feedback. 
+        Please select an option from the sidebar to begin. Each section has its functionalities:
+        - **Model Fine-Tuning:** Adjust parameters for your YOLO model and fine-tune it.
+        - **Results Access:** View past detection results and download them.
+        - **Query Tool:** Search for specific entries.
+        - **Entry Management:** Edit or delete specific entries.
+        """)
+    
+
+    
+
+    elif section == "Compare models":
+      
+        compare_models_function()  # Let's define this function next
+    
+
+     
+
+        
+    
 
 
     elif section == "Results Access":
@@ -73,8 +118,4 @@ def display_dashboard():
             placeholder.markdown(" ")
             time.sleep(0.5)
 
-    # Logout button in the sidebar
-    if st.sidebar.button("Logout"):
-        st.session_state.authenticated = False
-        st.session_state.page = 'main'
-        st.write("Logged out successfully!")
+  

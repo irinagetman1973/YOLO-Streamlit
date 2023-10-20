@@ -110,31 +110,7 @@ def load_model(model_path):
     model = YOLO(model_path)
     return model
 
-def scale_image(image, max_width=596, max_height=400):
-    """
-    Scale the input image while maintaining the aspect ratio, only if 
-    the width is greater than max_width or the height is greater than max_height.
-    :param image: Input image.
-    :param max_width: The maximum width for the image.
-    :param max_height: The maximum height for the image.
-    :return: Scaled image.
-    """
-    width, height = image.size
-    
-   
-    # Only scale if either dimension is larger than the max dimensions
-    if width > max_width or height > max_height:
-        # Determine the scaling factor such that the aspect ratio is maintained
-        scaling_factor = min(max_width / width, max_height / height)
-        new_width = int(width * scaling_factor)
-        new_height = int(height * scaling_factor)
-
-        # Resize the image
-        
-        return image.resize((new_width, new_height))
-
-    # If no scaling is needed, return the original image
-    return image
+#  
 
 
 
