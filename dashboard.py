@@ -2,6 +2,7 @@ import streamlit as st
 import time
 from comparison import compare_models_function
 import config
+from vizualization import visualize_inferences
 
 
 # Placeholder for stored results. 
@@ -38,7 +39,7 @@ def display_dashboard():
     
     
 
-    dashboard_sections = ["Compare models", "Results Access", "Query Tool", "Entry Management", "Feedback Section"]
+    dashboard_sections = ["Compare models", "Statistics", "Query Tool", "Entry Management", "Feedback Section"]
 
         # By default, the section is set to None to show the instruction page.
     section = st.session_state.get('dashboard_section', "")
@@ -74,20 +75,11 @@ def display_dashboard():
     
 
 
-    elif section == "Results Access":
-      st.write("Access Past Detection Results")
+    elif section == "Statistics":
+      
+      visualize_inferences()
 
-        # Displaying the results in a table format
-      for result in stored_results:
-            st.write(f"Image Name: {result['image_name']}")
-            st.write(f"Model Used: {result['model']}")
-            st.write(f"Objects Detected: {result['objects_detected']}")
-            st.write(f"[View Detected Image]({result['image_link']})")  # Placeholder link
-            st.write("---")  # Line separator for better clarity
-
-        # Download option (this is a placeholder, replace with actual logic to download images)
-      if st.button("Download All Results"):
-            st.write("Downloading all detected images...") 
+     
 
     elif section == "Query Tool":
         query = st.text_input("Search for an entry")
