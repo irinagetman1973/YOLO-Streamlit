@@ -104,9 +104,10 @@ def compare_models_function():
 
                 detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Probability:</b> {conf}<br>---<br>"
                 if class_id in count_dict:
-                    count_dict[class_id] += 1
+                    count_dict[class_id]['count'] += 1
+                    count_dict[class_id]['coordinates'].append(cords)
                 else:
-                    count_dict[class_id] = 1
+                    count_dict[class_id] = {'count': 1, 'coordinates': [cords]}
 
             results[model_name] = {
                 "count": count_dict,
@@ -114,7 +115,8 @@ def compare_models_function():
             }
 
         st.write("### Comparison Results")
-        st.table({model: res["count"] for model, res in results.items()})
+        st.table({model: {class_id: details['count'] for class_id, details in res["count"].items()} for model, res in results.items()})
+
 
         col_layout_detailed = st.columns(2 if len(selected_models) > 2 else len(selected_models))
 
@@ -187,12 +189,12 @@ def compare_models_function():
             if st.button('Save Results'):
                 data_to_save = []
                 for model, data in results.items():
+                   
                     entry = {
                         "model": model,
-                        "inference_details": [{"class_id": key, "count": value} for key, value in data["count"].items()],
+                        "inference_details": [{"class_id": key, "count": value['count'], "coordinates": value['coordinates']} for key, value in data["count"].items()],
                         "timestamp": {".sv": "timestamp"}
-                    }
-                    
+    }
                     data_to_save.append(entry)
                 
                 try:

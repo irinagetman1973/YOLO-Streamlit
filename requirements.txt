@@ -61,3 +61,4 @@ firebase_admin==6.2.0
 python-dotenv==1.0.0
 # firebase
 moviepy==1.0.3
+openpyxl

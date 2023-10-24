@@ -14,27 +14,27 @@ stored_results = [
 def display_dashboard():
     
 
-    lottie = """
-          <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-          <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
-          """
-    st.markdown("""
-        <style>
-            iframe {
-                position: fixed;
-                top: 16rem;
-                bottom: 0;
-                left: 205;
-                right: 0;
-                margin: auto;
-                z-index=-1;
-            }
-        </style>
-        """, unsafe_allow_html=True
-    )
+    # lottie = """
+    #       <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    #       <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
+    #       """
+    # st.markdown("""
+    #     <style>
+    #         iframe {
+    #             position: fixed;
+    #             top: 16rem;
+    #             bottom: 0;
+    #             left: 205;
+    #             right: 0;
+    #             margin: auto;
+    #             z-index=-1;
+    #         }
+    #     </style>
+    #     """, unsafe_allow_html=True
+    # )
 
 
-    st.components.v1.html(lottie, width=1110, height=1110)
+    # st.components.v1.html(lottie, width=1110, height=1110)
 
     
     
@@ -68,13 +68,6 @@ def display_dashboard():
       
         compare_models_function()  # Let's define this function next
     
-
-     
-
-        
-    
-
-
     elif section == "Statistics":
       
       visualize_inferences()
