@@ -12,7 +12,7 @@
 
 import streamlit as st
 from pathlib import Path
-# import plotly.graph_objects as go
+
 from PIL import Image
 import cv2
 import config
@@ -136,10 +136,10 @@ def compare_models_function():
                         {result["details"]}
                     </div>
                     """
-                    st.markdown(f"### Detailed results for {model_name}")
+                    st.markdown(f"**Detailed results for {model_name}**")
                     st.markdown(scrollable_textbox, unsafe_allow_html=True)
                 else:
-                    st.markdown(f"### Detailed results for {model_name}")
+                    st.markdown(f"**Detailed results for {model_name}**")
                     st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
         
         st.divider()

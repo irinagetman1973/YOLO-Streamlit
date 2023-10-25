@@ -117,7 +117,7 @@ def display_footer():
                 left: 0;
                 bottom: 0;
                 width: 100%;
-                background-color: #646CA7;
+                background-color: #FFFFFF;
                 text-align: center;
                 padding: 10px;
             }

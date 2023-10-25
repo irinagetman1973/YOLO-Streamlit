@@ -76,7 +76,7 @@ def display_main_page():
             
             lottie = """
             <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-            <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
+            <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 400px; height: 400px;" loop autoplay></lottie-player>
             """
             st.markdown("""
                 <style>
@@ -84,7 +84,7 @@ def display_main_page():
                         position: fixed;
                         top: 16rem;
                         bottom: 0;
-                        left: 205;
+                        left: 1205;
                         right: 0;
                         margin: auto;
                         z-index=-1;
@@ -94,7 +94,7 @@ def display_main_page():
             )
 
 
-            st.components.v1.html(lottie, width=1110, height=1110)
+            st.components.v1.html(lottie, width=410, height=410)
 
             st.title("Welcome to the :green[**_YOLO_**] models evaluation app!")
             st.divider()

@@ -11,32 +11,8 @@ stored_results = [
     {"image_name": "image2.jpg", "model": "YOLOv7", "objects_detected": 3, "image_link": "link_to_image2"},
 ]
 
-def display_dashboard():
-    
-
-    # lottie = """
-    #       <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    #       <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
-    #       """
-    # st.markdown("""
-    #     <style>
-    #         iframe {
-    #             position: fixed;
-    #             top: 16rem;
-    #             bottom: 0;
-    #             left: 205;
-    #             right: 0;
-    #             margin: auto;
-    #             z-index=-1;
-    #         }
-    #     </style>
-    #     """, unsafe_allow_html=True
-    # )
-
-
-    # st.components.v1.html(lottie, width=1110, height=1110)
-
-    
+def display_dashboard():   
+  
     
 
     dashboard_sections = ["Compare models", "Statistics", "Query Tool", "Entry Management", "Feedback Section"]

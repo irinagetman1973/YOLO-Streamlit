@@ -14,6 +14,9 @@ def get_inference_data(user_id):
 
     # Fetch data
     data = ref.get()
+    # Check if data exists
+    if data is None:
+        return []
 
     # Convert the fetched data into a list of dictionaries 
     return [item for item in data.values()]
@@ -52,15 +55,21 @@ def get_table_download_link(df, filename='data.xlsx', link_text='Download data a
 
 def visualize_inferences():
       
+      
       user_id = get_logged_in_user_id()
       
-      
       if not user_id:
-        st.warning("User not logged in or user ID not available.")
-        return
-      
+            st.warning("User not logged in or user ID not available.")
+            return
+            
       data = get_inference_data(user_id)
-      
+
+      if not data:  # Added data validation
+            st.markdown("## 📊 Visualizations & Insights")
+            st.markdown("### Oops! 🙈")
+            st.write("It seems there's an issue with your data or you don't have any data uploaded yet.")
+            st.write("Upload your data and start seeing insights")
+            return
       # Flattening the nested structure
       flattened_data = []
       for entry in data:
@@ -79,16 +88,16 @@ def visualize_inferences():
       df = pd.DataFrame(flattened_data)
       
 
-      st.header(':green[Visualizations & Insights]')
+      st.header('📊 :green[Visualizations & Insights]')
       st.divider()
 
-      st.subheader(':green[Data Table]')
+      
       
 
       col1,col2 = st.columns(2)
       with col1:
-            with st.expander("Click to see data"):
-                  
+            with st.expander("Data"):
+                  st.subheader('📜 :blue[Data Table]')
                   st.dataframe(df)
                   if st.button('Download Dataframe as Excel'):
                         st.markdown(get_table_download_link(df), unsafe_allow_html=True)
@@ -102,9 +111,9 @@ def visualize_inferences():
                   if st.button('Download Filtered Dataframe as Excel'):
                         st.markdown(get_table_download_link(filtered_df), unsafe_allow_html=True)
      # Create an expander for Summary Statistics
-      with st.expander("**Summary Statistics**", expanded=False):
+      with st.expander("**Summary Statistics** ", expanded=False):
       
-            st.subheader(':green[Summary Statistics]')
+            st.subheader(':blue[Summary Statistics] 📈')
             st.markdown(f"**Total inferences:** {len(df)}")
             st.markdown(f"**Unique objects detected:** {df['class_id'].nunique()}")
             st.markdown(f"**Average count of detections:** {df['count'].mean():.2f}")
@@ -113,20 +122,20 @@ def visualize_inferences():
             col1, col2 = st.columns(2)
 
             with col1:
-                  st.write(':green[**Frequency of Detected Objects**]')
+                  st.write(':blue[**Frequency of Detected Objects**]')
                   fig1, ax1 = plt.subplots()
                   df["class_id"].value_counts().plot(kind="bar", ax=ax1)
                   st.pyplot(fig1,use_container_width=True)
 
             with col2:
-                  st.write(':green[**Proportion of Detected Objects**]')
+                  st.write(':blue[**Proportion of Detected Objects**]')
                   fig2, ax2 = plt.subplots()
                   df["class_id"].value_counts().plot.pie(autopct="%1.1f%%", ax=ax2)
                   st.pyplot(fig2,use_container_width=True)
 
       with st.expander("**Historical Detection Analysis**", expanded=False):
       
-            st.subheader(':green[Detection Trends Over Time]')
+            st.subheader(':blue[Detection Trends Over Time] 📅')
             col1, col2, col3 = st.columns(3)
             
             # Convert the timestamp column to datetime format
