@@ -17,6 +17,11 @@ tqdm>=4.64.0
 easydict==1.10
 plotly==5.17.0
 
+# yolov7 requirements
+numpy>=1.18.5,<1.24.0
+protobuf<4.21.3
+ipython
+thop
 
 
 
@@ -31,7 +36,7 @@ streamlit-lottie==0.0.5
 # Plotting ------------------------------------
 pandas>=1.1.4
 seaborn>=0.11.0
-
+wandb
 
 
 # Extras --------------------------------------

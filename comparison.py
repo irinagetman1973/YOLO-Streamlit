@@ -16,12 +16,13 @@ from pathlib import Path
 from PIL import Image
 import cv2
 import config
-from utils import load_model, create_fig
+from utils_app import load_model, create_fig
 from au import db
 import requests
 import json
 from firebase_admin import db, firestore
-
+import yolov7.yolov7_wrapper
+from yolov7.yolov7_wrapper import YOLOv7Wrapper
 
 def save_to_firebase(data_to_save, user_id):
     
@@ -38,19 +39,23 @@ def save_to_firebase(data_to_save, user_id):
     except Exception as e:
         st.error(f"Failed to save results to Firebase: {e}")
     
-
-    
+#-----YOLOv7 setup---------
+# yolov7_wrapper = YOLOv7Wrapper()
+ 
 
 
 def compare_models_function():
     st.markdown("### Compare different models' performance")
     st.divider()
 
+    all_models_list = config.DETECTION_MODEL_LIST_V8 + config.DETECTION_MODEL_LIST_V7
+
     selected_models = st.sidebar.multiselect(
         "Select up to 4 models for comparison:",
-        config.DETECTION_MODEL_LIST,
+        all_models_list, 
         key="models_comparison_selectbox"
     )
+   
 
     conf = float(st.sidebar.slider(
         "Select Model Confidence", 30, 100, 50)) / 100
@@ -63,11 +68,24 @@ def compare_models_function():
 
     if uploaded_file:
         uploaded_image = Image.open(uploaded_file)
+        loaded_models = {}
+
+        for model_name in selected_models:
+            if model_name in config.DETECTION_MODEL_LIST_V7:
+                img_size = 640  # Adjust this based on the model variant, e.g., 640 for yolov7s
+                path_yolov7_weights = config.DETECTION_MODEL_DIR_V7/ model_name
+                # loaded_models[model_name] = yolov7_wrapper.new_yolo_model(img_size=img_size, path_yolov7_weights=path_yolov7_weights, path_img_i=None)  # Assuming image path is not required
+            else:
+                model_path = config.DETECTION_MODEL_DIR_V8 / model_name
+                try:
+                    loaded_models[model_name] = load_model(model_path)
+                except Exception as e:
+                    st.error(f"Unable to load model '{model_name}'. Error: {e}")
 
         # Load models first to avoid multiple loads
-        loaded_models = {}
+        
         for model_name in selected_models:
-            model_path = Path(config.DETECTION_MODEL_DIR, str(model_name))
+            model_path = config.DETECTION_MODEL_DIR_V8 / model_name
             try:
                 loaded_models[model_name] = load_model(model_path)
             except Exception as e:
@@ -206,8 +224,12 @@ def compare_models_function():
 
 
 def infer_image(image, model, conf):
-    detected_image = model.predict(image, conf=conf)  
-    boxes = detected_image[0].boxes
+    # Add logic to check if it's a YOLOv7 model:
+    if isinstance(model, YOLOv7Wrapper):
+        detected_image, boxes = model.predict(image, conf=conf)  # Assuming the YOLOv7 wrapper has a predict method with similar args
+    else:
+        detected_image = model.predict(image, conf=conf)  
+        boxes = detected_image[0].boxes
 
     if boxes:
         detected_img_arr = detected_image[0].plot()[:, :, ::-1]
@@ -216,4 +238,5 @@ def infer_image(image, model, conf):
         detected_image = image
 
     return detected_image, boxes
+
 

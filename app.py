@@ -1,7 +1,7 @@
 from pathlib import Path
 import streamlit as st
 import config
-from utils import load_model, infer_uploaded_image, infer_uploaded_video
+from utils_app import load_model, infer_uploaded_image, infer_uploaded_video
 from streamlit_lottie import st_lottie
 import requests
 
@@ -39,7 +39,7 @@ def display_main_page():
 
     model_type = st.sidebar.selectbox(
         "Select Model",
-        config.DETECTION_MODEL_LIST,
+        config.DETECTION_MODEL_LIST_V8,
         key='models_selectbox'
     )
 
@@ -48,7 +48,7 @@ def display_main_page():
 
     model_path = ""
     if model_type:
-        model_path = Path(config.DETECTION_MODEL_DIR, str(model_type))
+        model_path = Path(config.DETECTION_MODEL_DIRV_V8, str(model_type))
     else:
         st.error("Please Select Model in Sidebar")
 
