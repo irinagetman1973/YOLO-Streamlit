@@ -24,7 +24,7 @@ import requests
 import json
 import numpy as np
 from firebase_admin import db, firestore
-import yolov7.yolov7_wrapper
+# import yolov7.yolov7_wrapper
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
 
 
@@ -48,7 +48,7 @@ def save_to_firebase(data_to_save, user_id):
         st.error(f"Failed to save results to Firebase: {e}")
     
 
-def detect_with_v7(uploaded_file, selected_models_v7, confidence_threshold=0.5):
+def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
     # Check if an uploaded_file is provided
     if not uploaded_file:
         return None, None
@@ -58,53 +58,62 @@ def detect_with_v7(uploaded_file, selected_models_v7, confidence_threshold=0.5):
     im0 = Image.open(BytesIO(uploaded_img_data)).convert('RGB')
     im0_np = np.array(im0)
 
+    # Initialize a dictionary to store results from all models
     model_results = {}
 
-    # Infer YOLOv7 models using the YOLOv7Wrapper
-    for model_name in selected_models_v7:
-        yolov7_model = YOLOv7Wrapper(model_name)
-        detected_image, captions = yolov7_model.detect_and_draw_boxes_from_np(im0_np, confidence_threshold=confidence_threshold)
+    
+    # st.write(f" model name before the wrapper : {model_name}") debugging msg
+    yolov7_model = YOLOv7Wrapper(model_name)
+    # Perform detection and get back the image and captions (detections)
+    detected_image, captions = yolov7_model.detect_and_draw_boxes_from_np(im0_np, confidence_threshold=confidence_threshold)
 
-        boxes = {'count': {}, 'details': ''}
-        for caption in captions:
-            parts = caption.split()
-            class_name = parts[0].split('=')[1]
-            box = ' '.join(parts[1:6])  # "coordinates=(x1, y1, x2, y2)"
-            confidence = next(part.split('=')[1].rstrip('%') for part in parts if 'confidence' in part)
+    # Prepare a dictionary to store counts and entries for each class detected
+    boxes = {'count': {}, 'details': ''}
+    for caption in captions:
+        parts = caption.split()
+        class_name = parts[0].split('=')[1]
+        # box = ' '.join(parts[1:6]).split('=')[1].strip('()')
+        box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
+        confidence = float(next(part.split('=')[1].rstrip('%') for part in parts if 'confidence' in part))
+        
+        # If the class name is not in the dictionary, initialize its entry
+        if class_name not in boxes['count']:
+            boxes['count'][class_name] = {'count': 0, 'entries': []}
 
-            if class_name not in boxes['count']:
-                boxes['count'][class_name] = {'count': 0, 'entries': []}
+        # Create an entry for this particular detection
+        entry = {'coordinates': box, 'confidence': confidence}
+        boxes['count'][class_name]['entries'].append(entry)
+        boxes['count'][class_name]['count'] += 1
 
-            entry = {'coordinates': box, 'confidence': confidence}
-            boxes['count'][class_name]['entries'].append(entry)
-            boxes['count'][class_name]['count'] += 1
-            boxes['details'] += f"{class_name} {box} {confidence}\n"
+    
+    model_results[model_name] = boxes
 
-        model_results[model_name] = boxes
-
-    # Reformat the current model_results into the desired structure
+    # Now, we need to reformat the results to the desired output structure
     results = {}
     for model_name, boxes in model_results.items():
         count_dict = {}
-        detection_results = ""
+        detection_results = ""  # This ensures we start with a clean slate for the detection results
 
+        # Iterate over the 'count' dictionary inside the 'boxes' dictionary
         for class_name, details in boxes['count'].items():
             for entry in details['entries']:
-                # detection_results += f"<b style='color: blue;'>Object type:</b> {class_name}<br>"
-                # detection_results += f"<b style='color: blue;'>Coordinates:</b> {entry['coordinates']} <span style='color: blue;'>confidence</span>={entry['confidence']}%<br>---<br>"
+                
+                
+                # Append detection info to the results string in the specified format
                 detection_results += f"<b style='color: blue;'>Object type:</b> {class_name}<br>"
-                detection_results += (
-                    f"<b style='color: blue;'>Coordinates:</b> {entry['coordinates']} "
-                    f"<strong style='color: blue;'>Confidence:</strong> {entry['confidence']}%<br>---<br>"
-                )
-                            
+                detection_results += f"<b style='color: blue;'>Coordinates:</b> {entry['coordinates']}<br>"
+                detection_results += f"<b style='color: blue;'>Confidence:</b> {entry['confidence']}%<br>---<br>"
+                
+            # Populate the count dictionary for each class detected
             if class_name not in count_dict:
                 count_dict[class_name] = {'count': details['count']}
 
+        # Assign the structured results to the results dictionary under the current model name
         results[model_name] = {
             "count": count_dict,
             "details": detection_results
         }
+
     
     if isinstance(detected_image, Image.Image):
         detected_pil_image = detected_image
@@ -122,9 +131,6 @@ def detect_with_v7(uploaded_file, selected_models_v7, confidence_threshold=0.5):
 
 
     
-
-
-
 def detect_with_v8(uploaded_file, model, conf=0.5):
     """
     Execute inference for uploaded image with YOLOv8 model.
@@ -181,8 +187,27 @@ def detect_with_v8(uploaded_file, model, conf=0.5):
       # Display the results for debugging.
 
     return detected_image, results
-
-
+    
+def run_detection(detection_model_name, file, confidence):        
+            # Detect based on the model
+            
+            if detection_model_name in config.DETECTION_MODEL_DICT_V7:
+                
+                    with st.spinner(f'Detecting objects with {detection_model_name}...'):  # YOLOv7
+                        model_path = config.DETECTION_MODEL_DICT_V7[detection_model_name]
+                        
+                        detected_image, results = detect_with_v7(file, detection_model_name, confidence_threshold=confidence)
+                        
+            else:  # YOLOv8
+                model_path = config.DETECTION_MODEL_DICT_V8[detection_model_name] 
+                model_instance = load_model(model_path) 
+                if not model_instance:
+                    st.write(f"Error: Failed to load YOLOv8 model {detection_model_name}")
+                detected_image, results = detect_with_v8(file, detection_model_name, conf=confidence)
+            
+           
+                    
+            return  detected_image, results
 
 def compare_models_function():
     st.markdown("### Compare different models' performance")
@@ -216,57 +241,55 @@ def compare_models_function():
         return
 
     uploaded_file = st.sidebar.file_uploader("Choose an image for comparison...", type=["jpg", "png"])
+    if uploaded_file is not None and uploaded_file.type.startswith('image/'):
+        st.sidebar.divider()
+        st.sidebar.image(uploaded_file)
 
     
-
+            
+    
     # Layout for displaying images in 2x2 grid
     row1_col1, row1_col2 = st.columns(2)
     row2_col1, row2_col2 = st.columns(2)
 
     column_layouts = [row1_col1, row1_col2, row2_col1, row2_col2]
 
-    fig_detected = None
-
     if uploaded_file:
-        for idx, model_name in enumerate(selected_models):
+        all_results = {}
 
-            fig_detected = None
-            # Detect based on the model
-            if model_name in config.DETECTION_MODEL_DICT_V7:  # YOLOv7
-                model_path = config.DETECTION_MODEL_DICT_V7[model_name]
-                detected_image, results = detect_with_v7(uploaded_file, selected_models_v7, confidence_threshold=conf)
-                fig_detected = create_fig(detected_image, detected=True)
-                
-                # Handle YOLOv7 results here:
-                handle_v7_results(results, model_name)
-            else:  # YOLOv8
-                model_path = config.DETECTION_MODEL_DICT_V8[model_name] 
-                model_instance = load_model(model_path) 
-                if not model_instance:
-                    st.write(f"Error: Failed to load YOLOv8 model {model_name}")
-                    continue
-
-                detected_image, results = detect_with_v8(uploaded_file, model_instance, conf=conf)
-                # detected_image, boxes = infer_image(uploaded_image, model, conf)
-                if not detected_image:
-                    st.write(f"YOLOv8 {model_name} returned no image.")
-                if not results or not results.get(model_name):
-                    st.write(f"YOLOv8 {model_name} returned no results or malformed results.")
-                fig_detected = create_fig(detected_image, detected=True)
-
-                 # Handle YOLOv8 results here:
-                handle_v8_results(results,model_name)
-                
-                
+        for idx, selected_model_name in enumerate(selected_models):
+            if idx > 3:
+                break 
             with column_layouts[idx]:
-                if fig_detected:
-                    
-                    st.plotly_chart(fig_detected, use_container_width=True)
-                    st.write(model_name)
-                    # for key, value in results['count'].items():
-                    #     st.write(f"Detected {key}: {value['count']} times")
+                st.markdown(f"#### Model: {selected_model_name}")
+                # Ensure each button has a unique key
+                if st.button(f"Run {selected_model_name}", key=f"run_detection_{selected_model_name}"):
+                    # st.write(f"Attempting to detect with model: {selected_model_name}")
+                    detected_image, results = run_detection(selected_model_name, uploaded_file, conf)  
+                    # Store the results
+                    all_results[selected_model_name] = (detected_image, results)
+
+        # After all models have been run, handle the displaying of results
+        for selected_model_name, (detected_image, results) in all_results.items():
+            idx = selected_models.index(selected_model_name)  # Get the index for the layout
+            with column_layouts[idx]:
+                if detected_image:
+                    # Display the detection image
+                    st.image(detected_image, use_column_width=True)
+                    # Display results
+                    # Call the appropriate results handling function based on the model version
+                    if selected_model_name in config.DETECTION_MODEL_LIST_V7:
+                        handle_v7_results(results, selected_model_name)
+                    else:
+                        handle_v8_results(results, selected_model_name)
                 else:
-                    st.write("Error: No detections made.")
+                    st.error(f"Detection failed or no objects were detected for {selected_model_name}.")
+
+
+
+          
+ 
+                
 
 def handle_v7_results(results, model_name):
     # Displaying results with Streamlit
@@ -298,271 +321,48 @@ def handle_v7_results(results, model_name):
                 st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
 
 def handle_v8_results(results, model_name):
-    if results and 'count' in results:
-        for key, value in results['count'].items():
-            st.write(f"Detected {key}: {value} times")
-    else:
-        st.write(f"YOLOv8 {model_name} returned no results or malformed results.")
+    
+    # st.write(f"Type of res: {type(results)}")  # Add this for debugging
+    if not isinstance(results, dict):
+        raise ValueError("res should be a dictionary.")
+    # Ensure that the 'count' key exists in each model's results
+  
+    count = results.get("count")
+    details = results.get("details", "").strip()
+    
+    if count:
+        st.write("### Detection Count")
+        # Display the counts in some manner, perhaps in a table or list
+        for class_id, count in results['count'].items():
+            st.write(f"{class_id}: {count}")
 
+    # Detailed results display
+    col_layout_detailed = st.columns(2)
 
-#     if uploaded_file:
+    for index, (model_name, result) in enumerate(results['details'].items()):
+        with col_layout_detailed[index % 2]:
             
-#         # Load the image and convert it to a numpy array
-#         uploaded_img_data = uploaded_file.getvalue()
-#         im0 = Image.open(BytesIO(uploaded_img_data)).convert('RGB')
-#         im0_np = np.array(im0)
-#         st.sidebar.image(im0_np, caption='Uploaded Image.', use_column_width=True)
-
-#         loaded_models = {}
-#         model_logs = {}
-#         model_results = {}
-
-#         # Infer YOLOv7 models using the YOLOv7Wrapper
-#         for model_name in selected_models_v7:
-#             yolov7_model = YOLOv7Wrapper(model_name)
-#             detected_image, captions = yolov7_model.detect_and_draw_boxes_from_np(im0_np, confidence_threshold=conf)
-            
-#             boxes = {'count': {}, 'details': ''}
-#             for caption in captions:
-#                 parts = caption.split()
-#                 class_name = parts[0].split('=')[1]
-#                 box = ' '.join(parts[1:6]) # "coordinates=(x1, y1, x2, y2)"
-#                 confidence = next(part.split('=')[1].rstrip('%') for part in parts if 'confidence' in part)
-
-#                 if class_name not in boxes['count']:
-#                     boxes['count'][class_name] = {'count': 0, 'entries': []}
-                
-#                 entry = {'coordinates': box, 'confidence': confidence}
-#                 boxes['count'][class_name]['entries'].append(entry)
-#                 boxes['count'][class_name]['count'] += 1
-#                 boxes['details'] += f"{class_name} {box} {confidence}\n"
-
-#             model_results[model_name] = boxes
-
-#             st.image(detected_image)
-
-#             # Reformat the current model_results into the desired structure
-#             results = {}
-#             for model_name, boxes in model_results.items():
-#                 count_dict = {}
-#                 detection_results = ""
-                
-#                 for class_name, details in boxes['count'].items():
-#                     for entry in details['entries']:
-#                         detection_results += f"<b style='color: blue;'>Object type:</b> {class_name}<br>"
-#                         detection_results += f"<b style='color: blue;'>Coordinates:</b> {entry['coordinates']}<br>"
-#                         detection_results += f"<b style='color: blue;'>Probability:</b> {entry['confidence']}<br>---<br>"
-
-#                     if class_name not in count_dict:
-#                         count_dict[class_name] = {'count': details['count']}
-
-#                 results[model_name] = {
-#                     "count": count_dict,
-#                     "details": detection_results
-#                 }
-
-#             # Displaying results with Streamlit
-#             st.write("### Comparison Results")
-#             st.table({model: {class_id: details['count'] for class_id, details in res["count"].items()} for model, res in results.items()})
-
-#             col_layout_detailed = st.columns(2 if len(selected_models) > 2 else len(selected_models))
-
-#             for index, (model_name, result) in enumerate(results.items()):
-#                 with col_layout_detailed[index % 2]:
-#                     if result["details"].strip():
-#                         scrollable_textbox = f"""
-#                         <div style="
-#                             font-family: 'Source Code Pro','monospace';
-#                             font-size: 16px;
-#                             overflow-y: scroll;
-#                             border: 1px solid #000;
-#                             padding: 10px;
-#                             width: 500px;
-#                             height: 400px;
-#                         ">
-#                             {result["details"]}
-#                         </div>
-#                         """
-#                         st.markdown(f"**Detailed results for {model_name}**")
-#                         st.markdown(scrollable_textbox, unsafe_allow_html=True)
-#                     else:
-#                         st.markdown(f"**Detailed results for {model_name}**")
-#                         st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
+            if details:
+                scrollable_textbox = f"""
+                <div style="
+                    font-family: 'Source Code Pro','monospace';
+                    font-size: 16px;
+                    overflow-y: scroll;
+                    border: 1px solid #000;
+                    padding: 10px;
+                    width: 500px;
+                    height: 400px;
+                ">
+                    {details}
+                </div>
+                """
+                st.markdown(f"**Detailed results for {model_name}**")
+                st.markdown(scrollable_textbox, unsafe_allow_html=True)
+            else:
+                st.markdown(f"**Detailed results for {model_name}**")
+                st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
 
 
 
-
-
-
-#         # Redirect stdout for model logs
-#         original_stdout = sys.stdout
-#         sys.stdout = new_stdout = io.StringIO()
-
-        
-
-#         # Loading other models
-#         for model_name in selected_models_v8:
-#             model_path = config.DETECTION_MODEL_DIR_V8 / model_name
-#             try:
-#                 loaded_models[model_name] = load_model(model_path)
-#             except Exception as e:
-#                 st.error(f"Unable to load model '{model_name}'. Error: {e}")
-        
-#         # Reset stdout to its original form
-#         sys.stdout = original_stdout
-#         model_logs = new_stdout.getvalue()
-
-
-#         if model_logs:
-#             st.text("Model logs:")
-#             st.text(model_logs)
-
-#         # Define the layout for images
-#         col_layout = st.columns(2 if len(selected_models) > 2 else len(selected_models))
-
-#         model_results = {}
-
-#         for index, model_name in enumerate(selected_models):
-#             model = loaded_models.get(model_name)
-#             if not model:
-#                 continue  # Model not loaded due to some error
-            
-#             with col_layout[index % 2]:
-#                 detected_image, boxes = infer_image(im0_np, model, conf)
-#                 model_results[model_name] = boxes
-
-#                 fig_detected = create_fig(detected_image, detected=True)
-#                 st.plotly_chart(fig_detected, use_container_width=True)
-#                 st.write(model_name)
-
-#         results = {}
-        
-#         for model_name, boxes in model_results.items():
-#             count_dict = {}
-#             detection_results = ""
-#             for box in boxes:
-#                 class_id = model.names[box.cls[0].item()]
-#                 cords = box.xyxy[0].tolist()
-#                 cords = [round(x) for x in cords]
-#                 conf = round(box.conf[0].item(), 2)
-
-#                 detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Probability:</b> {conf}<br>---<br>"
-#                 if class_id in count_dict:
-#                     count_dict[class_id]['count'] += 1
-#                     count_dict[class_id]['coordinates'].append(cords)
-#                 else:
-#                     count_dict[class_id] = {'count': 1, 'coordinates': [cords]}
-
-#             results[model_name] = {
-#                 "count": count_dict,
-#                 "details": detection_results
-#             }
-
-#         st.write("### Comparison Results")
-#         st.table({model: {class_id: details['count'] for class_id, details in res["count"].items()} for model, res in results.items()})
-
-
-#         col_layout_detailed = st.columns(2 if len(selected_models) > 2 else len(selected_models))
-
-#         for index, (model_name, result) in enumerate(results.items()):
-#             with col_layout_detailed[index % 2]:
-#                 if result["details"].strip():
-#                     scrollable_textbox = f"""
-#                     <div style="
-#                         font-family: 'Source Code Pro','monospace';
-#                         font-size: 16px;
-#                         overflow-y: scroll;
-#                         border: 1px solid #000;
-#                         padding: 10px;
-#                         width: 500px;
-#                         height: 400px;
-#                     ">
-#                         {result["details"]}
-#                     </div>
-#                     """
-#                     st.markdown(f"**Detailed results for {model_name}**")
-#                     st.markdown(scrollable_textbox, unsafe_allow_html=True)
-#                 else:
-#                     st.markdown(f"**Detailed results for {model_name}**")
-#                     st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
-        
-#         st.divider()
-
-#         if "user" in st.session_state and "uid" in st.session_state["user"]:
-#             user_id = st.session_state["user"]["uid"]
-#             st.markdown(
-#                 """
-#                 <style>
-#                     .tooltip {
-#                         position: relative;
-#                         display: inline-block;
-#                         cursor: pointer;
-#                     }
-
-#                     .tooltip .tooltiptext {
-#                         visibility: hidden;
-#                         width: 220px;
-#                         background-color: #ffa07a;
-#                         color: #fff;
-#                         text-align: center;
-#                         border-radius: 6px;
-#                         padding: 5px;
-#                         position: absolute;
-#                         z-index: 1;
-#                         top: -5px;
-#                         left: 305%;
-#                         margin-left: -110px;
-#                         opacity: 0;
-#                         transition: opacity 0.3s;
-#                     }
-
-#                     .tooltip:hover .tooltiptext {
-#                         visibility: visible;
-#                         opacity: 1;
-#                     }
-#                 </style>
-
-#                 <div class="tooltip">
-#                     ℹ️
-#                     <span class="tooltiptext">Results will be saved to a database for future statistics</span>
-#                 </div>
-#                 """,
-#                 unsafe_allow_html=True
-#             )
-
-#             if st.button('Save Results'):
-#                 data_to_save = []
-#                 for model, data in results.items():
-                   
-#                     entry = {
-#                         "model": model,
-#                         "inference_details": [{"class_id": key, "count": value['count'], "coordinates": value['coordinates']} for key, value in data["count"].items()],
-#                         "timestamp": {".sv": "timestamp"}
-#     }
-#                     data_to_save.append(entry)
-                
-#                 try:
-#                     save_to_firebase(data_to_save, user_id)
-#                 except Exception as e:
-#                     st.error(f"Error saving data to Firebase: {e}")
-#         else:
-#             st.warning("User not logged in or user ID not available.")
-
-
-# def infer_image(image, model, conf):
-#     # Add logic to check if it's a YOLOv7 model:
-#     if isinstance(model, YOLOv7Wrapper):
-#         detected_image, boxes = model.predict(image, conf=conf)  # Assuming the YOLOv7 wrapper has a predict method with similar args
-#     else:
-#         detected_image = model.predict(image, conf=conf)  
-#         boxes = detected_image[0].boxes
-
-#     if boxes:
-#         detected_img_arr = detected_image[0].plot()[:, :, ::-1]
-#         detected_image = Image.fromarray(cv2.cvtColor(detected_img_arr, cv2.COLOR_BGR2RGB))
-#     else:
-#         detected_image = image
-
-#     return detected_image, boxes
 
 
