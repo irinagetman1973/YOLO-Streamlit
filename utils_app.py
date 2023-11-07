@@ -85,7 +85,7 @@ def _display_detected_frames(conf, model, st_frame, image):
     # Predict the objects in the image using YOLOv8 model
     res = model.predict(image, conf=conf)
 
-    # Assuming the 'plot' method of the result object 'res' creates an image with detected objects plotted
+   
     res_plotted = res[0].plot()
 
     # Display the frame with detected objects

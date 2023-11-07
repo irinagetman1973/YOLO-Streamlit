@@ -50,3 +50,4 @@ python-dotenv==1.0.0
 # firebase
 moviepy==1.0.3
 openpyxl
+memory_profiler==0.61.0
