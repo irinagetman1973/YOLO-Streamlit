@@ -26,6 +26,7 @@ import os
 import moviepy.editor as mpy
 
 os.environ['TMPDIR'] = 'C:\\Users\\irina\\tmp'
+os.environ['OPENCV_IO_MAX_IMAGE_PIXELS'] = '0'
 
 os.environ['OPENCV_IO_MAX_IMAGE_PIXELS'] = '0'
 

@@ -4,8 +4,10 @@ ultralytics>=1.0.0
 
 # Base ----------------------------------------
 matplotlib>=3.2.2
+
 opencv-python==4.8.1.78
 opencv-python-headless==4.8.1.78
+
 
 Pillow>=7.1.2
 PyYAML>=5.3.1
@@ -49,5 +51,8 @@ firebase_admin==6.2.0
 python-dotenv==1.0.0
 # firebase
 moviepy==1.0.3
+<<<<<<< HEAD
 openpyxl
 memory_profiler==0.61.0
+=======
+>>>>>>> 40c8f729768a8e24f07b6e68a80549b3ee3135cb
