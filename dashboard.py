@@ -25,18 +25,79 @@ def display_dashboard():
 
     st.session_state.dashboard_section = section
 
-    if not section:  # When the selection is empty
-        st.write("## Welcome to the Dashboard!")
-        st.divider()
-        st.write("""
-        Here, you can manage and view the results, fine-tune your model, and provide feedback. 
-        Please select an option from the sidebar to begin. Each section has its functionalities:
-        - **Model Fine-Tuning:** Adjust parameters for your YOLO model and fine-tune it.
-        - **Results Access:** View past detection results and download them.
-        - **Query Tool:** Search for specific entries.
-        - **Entry Management:** Edit or delete specific entries.
-        """)
-    
+    if not section:
+        lottie = """
+            <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+            <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 400px; height: 400px;" loop autoplay></lottie-player>
+            """
+        st.markdown("""
+            <style>
+                iframe {
+                    position: fixed;
+                    top: 16rem;
+                    bottom: 0;
+                    left: 105;
+                    right: 0;
+                    margin: auto;
+                    z-index=-1;
+                }
+            </style>
+            """, unsafe_allow_html=True
+        )
+
+
+        st.components.v1.html(lottie, width=410, height=410) # When the selection is empty
+        col1, col2 = st.columns([0.6, 0.3])  # Create a 2-column layout with equal width for each column
+
+        with col1:
+            st.subheader("🎓 Welcome to the Dashboard!")
+            st.divider()
+            st.write("""
+            Welcome! Please select an option from the sidebar to begin. Each section offers unique functionalities:
+            """)
+
+            # Models Performance Comparison
+            st.markdown("""
+            **:one: **Models Performance Comparison**:**
+            Compare the object detection capabilities of different models. 
+            View detected images side-by-side for visual comparison, inference times
+            and explore detection results including the count of each detected class 
+            in a detailed table format.
+            You can also save detection results to the database for future analysis.
+            """)
+
+            st.divider()
+
+            # Results Access
+            st.markdown("""
+            **:two: **Results Access**:**
+            Access and review past detection results. 
+            Visualize them through charts and graphs, 
+            and download the results as an Excel worksheet.
+            """)
+
+            st.divider()
+
+            # Query Tool
+            st.markdown("""
+            **:three: **Query Tool**:**
+            Use our search tool to find specific entries quickly and efficiently.
+            """)
+
+            st.divider()
+
+            # Feedback
+            st.markdown("""
+            **:four: **Feedback**:**
+            We value your input! Share your feedback  to help us improve.
+            """)
+
+            st.divider()
+
+            st.write("**Enjoy your experience and happy detecting!** :green_heart:")
+
+            
+            
 
     
 

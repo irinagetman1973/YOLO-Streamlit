@@ -28,7 +28,7 @@ from firebase_admin import db, firestore
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
 import gc
 import time
-import re
+
 
 
 
@@ -69,35 +69,58 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
     # Perform detection and get back the image and captions (detections)
     detected_image, captions = yolov7_model.detect_and_draw_boxes_from_np(im0_np, confidence_threshold=confidence_threshold)
 
-    # Prepare a dictionary to store counts and entries for each class detected
+    confidence_threshold = 0.5  
+
     boxes = {'count': {}, 'details': ''}
     for caption in captions:
         parts = caption.split()
         class_name = parts[0].split('=')[1]
-        # box = ' '.join(parts[1:6]).split('=')[1].strip('()')
-        # Check if 'parts' has enough elements
-        if len(parts) >= 5:
-            box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
-        else:
-            # Handle the case where 'parts' doesn't have enough elements
-            
-            box = "Unavailable"  # Example default value
-        # box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
-        confidence = float(next(part.split('=')[1].rstrip('%') for part in parts if 'confidence' in part))
         
-        # If the class name is not in the dictionary, initialize its entry
-        if class_name not in boxes['count']:
-            boxes['count'][class_name] = {'count': 0, 'entries': []}
+        # Initialize default values for box and confidence
+        box = "Unavailable"
+        confidence = 0.0
 
-        # Create an entry for this particular detection
-        entry = {'coordinates': box, 'confidence': confidence}
-        boxes['count'][class_name]['entries'].append(entry)
-        boxes['count'][class_name]['count'] += 1
+        # Check if 'parts' has enough elements to extract coordinates and confidence
+        if len(parts) >= 5:
+            # Attempt to extract the coordinates
+            try:
+                # The coordinates are expected to be in parts[1], parts[2], parts[3], and parts[4]
+                x_min = parts[1].split('=')[1].strip('()').strip(',')
+                y_min = parts[2].strip(',')
+                x_max = parts[3].strip(',')
+                y_max = parts[4].strip(')')
+                box = f"{x_min}, {y_min}, {x_max}, {y_max}"
+            except Exception as e:
+                print(f"Error parsing coordinates: {e}")
+                box = "Unavailable"
+
+            # Attempt to extract the confidence
+            try:
+                confidence_part = next(part for part in parts if 'confidence' in part)
+                confidence = float(confidence_part.split('=')[1].rstrip('%'))
+            except Exception as e:
+                print(f"Error parsing confidence: {e}")
+                confidence = 0.0
+
+        # Update dictionary only if confidence is above threshold
+        if confidence >= confidence_threshold * 100:  # Assuming confidence_threshold is in [0, 1]
+            if class_name not in boxes['count']:
+                boxes['count'][class_name] = {'count': 0, 'entries': []}
+            entry = {'coordinates': box, 'confidence': confidence}
+            boxes['count'][class_name]['entries'].append(entry)
+            boxes['count'][class_name]['count'] += 1
+
+
+
+
+
+        
+        
 
     
     model_results[model_name] = boxes
 
-    # Now, we need to reformat the results to the desired output structure
+    
     results = {}
     for model_name, boxes in model_results.items():
         count_dict = {}
@@ -128,7 +151,7 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
         detected_pil_image = detected_image
     else:
         # This will handle the case where detected_image might be a numpy array (or any other type)
-        # But if detected_image is neither a PIL Image nor a numpy array, you need to handle that scenario as well
+        
         try:
             detected_pil_image = Image.fromarray(detected_image.astype(np.uint8))
         except Exception as e:
@@ -139,7 +162,7 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
 
     # Explicitly delete large objects and free memory
     # del model
-    gc.collect()
+    #gc.collect()
     
     return detected_pil_image, results
 
@@ -187,7 +210,7 @@ def detect_with_v8(uploaded_file, model, conf=0.5):
         cords = [round(x) for x in cords]
         conf = round(box.conf[0].item(), 2)
 
-        detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Probability:</b> {conf}<br>---<br>"
+        detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Confidence:</b> {conf}<br>---<br>"
         if class_id in count_dict:
             count_dict[class_id] += 1
         else:
@@ -340,7 +363,7 @@ def compare_models_function():
         st.write("### Comparison Results")
         st.table(aggregated_results)
         
-        
+        display_model_results(all_results)
         st.divider()
 
         if "user" in st.session_state and "uid" in st.session_state["user"]:
@@ -430,7 +453,7 @@ def display_animation():
         """, unsafe_allow_html=True
     )
 
-
+    st.write("🔍 Analyzing your image... Hang tight, awesome detections are on their way! ")
     st.components.v1.html(lottie, width=810, height=810)        
 
             
@@ -461,40 +484,30 @@ def update_v8_results(aggregated_results, results, model_name):
 
             aggregated_results[class_id][model_name] = count_value
                 
-            
+def display_model_results(model_results):
+    # Grid layout: 2x2 for up to four models
+    columns = [st.columns(2), st.columns(2)]
 
-        
-
-
-
-          
- 
-                
+    for idx, (model_name, results) in enumerate(model_results.items()):
+        with columns[idx // 2][idx % 2]:
+            if model_name in config.DETECTION_MODEL_LIST_V7:
+                handle_v7_results(results, model_name)
+            else:
+                handle_v8_results(results, model_name)          
 
 def handle_v7_results(results, model_name):
-    # Displaying results with Streamlit    
-
-    for (model_name, result) in enumerate(results.items()):
-        
+    with st.expander(f"Detailed results for {model_name}"):
+        for model_name, result in results.items():  # Corrected iteration
             if result["details"].strip():
                 scrollable_textbox = f"""
-                <div style="
-                    font-family: 'Source Code Pro','monospace';
-                    font-size: 16px;
-                    overflow-y: scroll;
-                    border: 1px solid #000;
-                    padding: 10px;
-                    width: 500px;
-                    height: 400px;
-                ">
-                    {result["details"]}
-                </div>
+                    <div style="font-family: 'Source Code Pro','monospace'; font-size: 16px; overflow-y: scroll; border: 1px solid #000; padding: 10px; width: 500px; height: 400px;">
+                        {result["details"]}
+                    </div>
                 """
-                st.markdown(f"**Detailed results for {model_name}**")
                 st.markdown(scrollable_textbox, unsafe_allow_html=True)
             else:
-                st.markdown(f"**Detailed results for {model_name}**")
                 st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
+
 
 
 
@@ -503,35 +516,31 @@ def handle_v8_results(results, model_name):
     if not isinstance(results, dict):
         raise ValueError("Expected results to be a dictionary.")
 
-    count = results.get("count")
+    
     details = results.get("details", "").strip()
 
-    if count:
-        st.write("### Detection Count for", model_name)
-        # Display the counts in a table or list
-        for class_id, count in count.items():
-            st.write(f"{class_id}: {count}")
-
-    # Detailed results display
-    if details:
-        st.markdown(f"**Detailed results for {model_name}**")
-        scrollable_textbox = f"""
-        <div style="
-            font-family: 'Source Code Pro','monospace';
-            font-size: 16px;
-            overflow-y: scroll;
-            border: 1px solid #000;
-            padding: 10px;
-            width: 500px;
-            height: 400px;
-        ">
-            {details}
-        </div>
-        """
-        st.markdown(scrollable_textbox, unsafe_allow_html=True)
-    else:
-        st.markdown(f"**Detailed results for {model_name}**")
-        st.markdown(f"No objects detected by {model_name}.")
+    
+    with st.expander(f"Detailed results for {model_name}"):
+        # Detailed results display
+        if details:
+            
+            scrollable_textbox = f"""
+            <div style="
+                font-family: 'Source Code Pro','monospace';
+                font-size: 16px;
+                overflow-y: scroll;
+                border: 1px solid #000;
+                padding: 10px;
+                width: 500px;
+                height: 400px;
+            ">
+                {details}
+            </div>
+            """
+            st.markdown(scrollable_textbox, unsafe_allow_html=True)
+        else:
+            st.markdown(f"**Detailed results for {model_name}**")
+            st.markdown(f"No objects detected by {model_name}.")
 
 
 
