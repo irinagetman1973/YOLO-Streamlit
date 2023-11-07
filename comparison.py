@@ -27,8 +27,8 @@ from firebase_admin import db, firestore
 
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
 import gc
-
-
+import time
+import re
 
 
 
@@ -75,7 +75,14 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
         parts = caption.split()
         class_name = parts[0].split('=')[1]
         # box = ' '.join(parts[1:6]).split('=')[1].strip('()')
-        box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
+        # Check if 'parts' has enough elements
+        if len(parts) >= 5:
+            box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
+        else:
+            # Handle the case where 'parts' doesn't have enough elements
+            
+            box = "Unavailable"  # Example default value
+        # box = parts[1].split('=')[1].strip('()') + parts[2].strip(',') + ', ' + parts[3].strip(',') + ', ' + parts[4].strip(')')
         confidence = float(next(part.split('=')[1].rstrip('%') for part in parts if 'confidence' in part))
         
         # If the class name is not in the dictionary, initialize its entry
@@ -136,8 +143,7 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
     
     return detected_pil_image, results
 
-
-    
+  
 def detect_with_v8(uploaded_file, model, conf=0.5):
     """
     Execute inference for uploaded image with YOLOv8 model.
@@ -221,11 +227,12 @@ def run_detection(detection_model_name, file, confidence):
 def compare_models_function():
     st.markdown("### Compare different models' performance")
     st.divider()
+    
 
     
     st.sidebar.divider()
     # New UI for YOLOv7 models
-    st.sidebar.markdown("### YOLOv7 Models")
+    st.sidebar.markdown("### :camera: YOLOv7 Models")
     selected_models_v7 = st.sidebar.multiselect(
         "Select YOLOv7 models for comparison:",
         config.DETECTION_MODEL_LIST_V7, 
@@ -233,7 +240,7 @@ def compare_models_function():
     )
 
     # UI for other models (V8)
-    st.sidebar.markdown("### YOLOv8 Models")
+    st.sidebar.markdown("### :rocket: YOLOv8 Models")
     selected_models_v8 = st.sidebar.multiselect(
         "Select other models for comparison:",
         config.DETECTION_MODEL_LIST_V8,
@@ -254,10 +261,15 @@ def compare_models_function():
         return
 
     uploaded_file = st.sidebar.file_uploader("Choose an image for comparison...", type=["jpg", "png"])
+
+    animation_placeholder = st.empty()
+
     if uploaded_file is not None and uploaded_file.type.startswith('image/'):
         st.sidebar.divider()
         st.sidebar.image(uploaded_file)
-
+        # Display the animation
+        with animation_placeholder.container():
+            display_animation()
     
             
     
@@ -277,6 +289,7 @@ def compare_models_function():
         detected_images = {}
         all_results = {}
         aggregated_results = {} 
+        inference_times = {}
 
         # Automatically run detection for each selected model
         for idx, selected_model_name in enumerate(selected_models):
@@ -284,9 +297,14 @@ def compare_models_function():
                 break
 
             # Run detection
-            
+            start_time = time.time()
             detected_image, results = run_detection(selected_model_name, uploaded_file, conf)
+            end_time = time.time()
             
+            # Calculate and store the inference time for the current model
+            inference_time = end_time - start_time
+            inference_times[selected_model_name] = inference_time
+
             # Store detection results
             detected_images[selected_model_name] = detected_image
             all_results[selected_model_name] = results
@@ -301,6 +319,10 @@ def compare_models_function():
             else:
                 update_v8_results(aggregated_results, results, selected_model_name)
 
+
+        animation_placeholder.empty()
+
+
         # Display detected images side by side
         for idx, (model_name, detected_image) in enumerate(detected_images.items()):
             row_idx = idx // 2  # Row index: 0 or 1
@@ -310,6 +332,10 @@ def compare_models_function():
                     fig = create_fig(detected_image, detected=True)
                     st.plotly_chart(fig, use_container_width=True)
                     st.caption(model_name)
+
+                    # Display inference time
+                    if model_name in inference_times:
+                        st.write(f"Inference time: {inference_times[model_name]:.2f} seconds")
 
         st.write("### Comparison Results")
         st.table(aggregated_results)
@@ -361,14 +387,20 @@ def compare_models_function():
 
             if st.button('Save Results'):
                 data_to_save = []
-                for model, data in results.items():
-
-                    entry = {
-                        "model": model,
-                        "inference_details": [{"class_id": key, "count": value['count'], "coordinates": value['coordinates']} for key, value in data["count"].items()],
-                        "timestamp": {".sv": "timestamp"}
-    }
-                    data_to_save.append(entry)
+                
+                # Assuming aggregated_results is structured as {class_id: {model_name: count, ...}, ...}
+                for class_id, models_data in aggregated_results.items():
+                    for model_name, details in models_data.items():
+                        entry = {
+                            "model": model_name,
+                            "inference_details": {
+                                "class_id": class_id,
+                                "count": ['count']
+                                
+                            },
+                            "timestamp": {".sv": "timestamp"}
+                        }
+                        data_to_save.append(entry)
 
                 try:
                     save_to_firebase(data_to_save, user_id)
@@ -378,7 +410,28 @@ def compare_models_function():
             st.warning("User not logged in or user ID not available.")
     
 
-        
+def display_animation():
+    lottie = """
+            <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+            <lottie-player src="https://raw.githubusercontent.com/irinagetman1973/YOLO-Streamlit/main/animation_sphere.json" background="transparent" speed="1" style="width: 800px; height: 800px;" loop autoplay></lottie-player>
+            """
+    st.markdown("""
+        <style>
+            iframe {
+                position: fixed;
+                top: 16rem;
+                bottom: 0;
+                left: 205;
+                right: 0;
+                margin: auto;
+                z-index=-1;
+            }
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
+    st.components.v1.html(lottie, width=810, height=810)        
 
             
 def update_v7_results(aggregated_results, results, model_name):
@@ -393,17 +446,23 @@ def update_v7_results(aggregated_results, results, model_name):
             aggregated_results[class_id][model_name] = count_details['count']
     else:
         st.write(f"No 'count' found in results for model: {model_name}")
-   
+ 
 
 
 def update_v8_results(aggregated_results, results, model_name):
-    
     count = results.get("count")
+    # Assuming `details` contains coordinates for each class_id
+    
+
     if count:
         for class_id, count_value in count.items():
             if class_id not in aggregated_results:
                 aggregated_results[class_id] = {}
+
             aggregated_results[class_id][model_name] = count_value
+                
+            
+
         
 
 
@@ -413,14 +472,10 @@ def update_v8_results(aggregated_results, results, model_name):
                 
 
 def handle_v7_results(results, model_name):
-    # Displaying results with Streamlit
-    st.write("### Comparison Results")
-    st.table({model: {class_id: details['count'] for class_id, details in res["count"].items()} for model, res in results.items()})
+    # Displaying results with Streamlit    
 
-    col_layout_detailed = st.columns(2)
-
-    for index, (model_name, result) in enumerate(results.items()):
-        with col_layout_detailed[index % 2]:
+    for (model_name, result) in enumerate(results.items()):
+        
             if result["details"].strip():
                 scrollable_textbox = f"""
                 <div style="
