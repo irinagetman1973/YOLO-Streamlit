@@ -24,8 +24,10 @@ import requests
 import json
 import numpy as np
 from firebase_admin import db, firestore
-# import yolov7.yolov7_wrapper
+
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
+import gc
+
 
 
 
@@ -47,7 +49,7 @@ def save_to_firebase(data_to_save, user_id):
     except Exception as e:
         st.error(f"Failed to save results to Firebase: {e}")
     
-
+@st.cache_data()
 def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
     # Check if an uploaded_file is provided
     if not uploaded_file:
@@ -126,7 +128,12 @@ def detect_with_v7(uploaded_file,model_name, confidence_threshold=0.5):
             print(f"Error converting detected_image to PIL image: {e}")
             detected_pil_image = None  # Or you can provide a default image here
 
-    # st.write(model_results)
+    
+
+    # Explicitly delete large objects and free memory
+    # del model
+    gc.collect()
+    
     return detected_pil_image, results
 
 
@@ -153,7 +160,7 @@ def detect_with_v8(uploaded_file, model, conf=0.5):
     except Exception as e:
         print(f"Error opening uploaded image: {e}")
         return None, None
-
+    
     detected_image_result = model.predict(uploaded_image, conf=conf)
     boxes = detected_image_result[0].boxes
 
@@ -185,8 +192,9 @@ def detect_with_v8(uploaded_file, model, conf=0.5):
         "details": detection_results
     }
       # Display the results for debugging.
-
-    return detected_image, results
+    #model_architecture = str(model)
+    
+    return detected_image, results #, model_architecture
     
 def run_detection(detection_model_name, file, confidence):        
             # Detect based on the model
@@ -203,11 +211,12 @@ def run_detection(detection_model_name, file, confidence):
                 model_instance = load_model(model_path) 
                 if not model_instance:
                     st.write(f"Error: Failed to load YOLOv8 model {detection_model_name}")
-                detected_image, results = detect_with_v8(file, detection_model_name, conf=confidence)
+                detected_image, results = detect_with_v8(file, model_instance, conf=confidence)
             
            
+            
+            return detected_image, results #, model_architecture#
                     
-            return  detected_image, results
 
 def compare_models_function():
     st.markdown("### Compare different models' performance")
@@ -232,7 +241,11 @@ def compare_models_function():
     )
     
     selected_models = selected_models_v7 + selected_models_v8
-
+    # Check if any models are selected
+    if not selected_models:
+        st.info("Please select models for comparison.")
+        
+        return
     conf = float(st.sidebar.slider(
         "Select Model Confidence", 30, 100, 50)) / 100
 
@@ -248,42 +261,150 @@ def compare_models_function():
     
             
     
-    # Layout for displaying images in 2x2 grid
-    row1_col1, row1_col2 = st.columns(2)
-    row2_col1, row2_col2 = st.columns(2)
-
-    column_layouts = [row1_col1, row1_col2, row2_col1, row2_col2]
+    #------- Layout for displaying images in 2x2 grid
+    
+    
+    if len(selected_models) > 2:
+        # Create a 2x2 grid for four models
+        row1_col1, row1_col2 = st.columns(2)
+        row2_col1, row2_col2 = st.columns(2)
+        column_layouts = [(row1_col1, row1_col2), (row2_col1, row2_col2)]
+    else:
+        #-------- Create a single row for fewer models
+        column_layouts = [st.columns(2) for _ in range(len(selected_models))]
 
     if uploaded_file:
+        detected_images = {}
         all_results = {}
+        aggregated_results = {} 
 
+        # Automatically run detection for each selected model
         for idx, selected_model_name in enumerate(selected_models):
             if idx > 3:
-                break 
-            with column_layouts[idx]:
-                st.markdown(f"#### Model: {selected_model_name}")
-                # Ensure each button has a unique key
-                if st.button(f"Run {selected_model_name}", key=f"run_detection_{selected_model_name}"):
-                    # st.write(f"Attempting to detect with model: {selected_model_name}")
-                    detected_image, results = run_detection(selected_model_name, uploaded_file, conf)  
-                    # Store the results
-                    all_results[selected_model_name] = (detected_image, results)
+                break
 
-        # After all models have been run, handle the displaying of results
-        for selected_model_name, (detected_image, results) in all_results.items():
-            idx = selected_models.index(selected_model_name)  # Get the index for the layout
-            with column_layouts[idx]:
+            # Run detection
+            
+            detected_image, results = run_detection(selected_model_name, uploaded_file, conf)
+            
+            # Store detection results
+            detected_images[selected_model_name] = detected_image
+            all_results[selected_model_name] = results
+            
+
+
+        # Aggregate results
+        for selected_model_name, results in all_results.items():
+            
+            if selected_model_name in config.DETECTION_MODEL_LIST_V7:
+                update_v7_results(aggregated_results, results, selected_model_name)
+            else:
+                update_v8_results(aggregated_results, results, selected_model_name)
+
+        # Display detected images side by side
+        for idx, (model_name, detected_image) in enumerate(detected_images.items()):
+            row_idx = idx // 2  # Row index: 0 or 1
+            col_idx = idx % 2   # Column index: 0 or 1
+            with column_layouts[row_idx][col_idx]:
                 if detected_image:
-                    # Display the detection image
-                    st.image(detected_image, use_column_width=True)
-                    # Display results
-                    # Call the appropriate results handling function based on the model version
-                    if selected_model_name in config.DETECTION_MODEL_LIST_V7:
-                        handle_v7_results(results, selected_model_name)
-                    else:
-                        handle_v8_results(results, selected_model_name)
-                else:
-                    st.error(f"Detection failed or no objects were detected for {selected_model_name}.")
+                    fig = create_fig(detected_image, detected=True)
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption(model_name)
+
+        st.write("### Comparison Results")
+        st.table(aggregated_results)
+        
+        
+        st.divider()
+
+        if "user" in st.session_state and "uid" in st.session_state["user"]:
+            user_id = st.session_state["user"]["uid"]
+            st.markdown(
+                """
+                <style>
+                    .tooltip {
+                        position: relative;
+                        display: inline-block;
+                        cursor: pointer;
+                    }
+
+                    .tooltip .tooltiptext {
+                        visibility: hidden;
+                        width: 220px;
+                        background-color: #ffa07a;
+                        color: #fff;
+                        text-align: center;
+                        border-radius: 6px;
+                        padding: 5px;
+                        position: absolute;
+                        z-index: 1;
+                        top: -5px;
+                        left: 305%;
+                        margin-left: -110px;
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    }
+
+                    .tooltip:hover .tooltiptext {
+                        visibility: visible;
+                        opacity: 1;
+                    }
+                </style>
+
+                <div class="tooltip">
+                    i
+                    <span class="tooltiptext">Results will be saved to a database for future statistics</span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            if st.button('Save Results'):
+                data_to_save = []
+                for model, data in results.items():
+
+                    entry = {
+                        "model": model,
+                        "inference_details": [{"class_id": key, "count": value['count'], "coordinates": value['coordinates']} for key, value in data["count"].items()],
+                        "timestamp": {".sv": "timestamp"}
+    }
+                    data_to_save.append(entry)
+
+                try:
+                    save_to_firebase(data_to_save, user_id)
+                except Exception as e:
+                    st.error(f"Error saving data to Firebase: {e}")
+        else:
+            st.warning("User not logged in or user ID not available.")
+    
+
+        
+
+            
+def update_v7_results(aggregated_results, results, model_name):
+    
+
+    # Extract the 'count' dictionary from the results
+    count_dict = results.get(model_name, {}).get('count', {})
+    if count_dict:
+        for class_id, count_details in count_dict.items():
+            if class_id not in aggregated_results:
+                aggregated_results[class_id] = {}
+            aggregated_results[class_id][model_name] = count_details['count']
+    else:
+        st.write(f"No 'count' found in results for model: {model_name}")
+   
+
+
+def update_v8_results(aggregated_results, results, model_name):
+    
+    count = results.get("count")
+    if count:
+        for class_id, count_value in count.items():
+            if class_id not in aggregated_results:
+                aggregated_results[class_id] = {}
+            aggregated_results[class_id][model_name] = count_value
+        
 
 
 
@@ -320,49 +441,42 @@ def handle_v7_results(results, model_name):
                 st.markdown(f"**Detailed results for {model_name}**")
                 st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
 
+
+
+
 def handle_v8_results(results, model_name):
-    
-    # st.write(f"Type of res: {type(results)}")  # Add this for debugging
     if not isinstance(results, dict):
-        raise ValueError("res should be a dictionary.")
-    # Ensure that the 'count' key exists in each model's results
-  
+        raise ValueError("Expected results to be a dictionary.")
+
     count = results.get("count")
     details = results.get("details", "").strip()
-    
+
     if count:
-        st.write("### Detection Count")
-        # Display the counts in some manner, perhaps in a table or list
-        for class_id, count in results['count'].items():
+        st.write("### Detection Count for", model_name)
+        # Display the counts in a table or list
+        for class_id, count in count.items():
             st.write(f"{class_id}: {count}")
 
     # Detailed results display
-    col_layout_detailed = st.columns(2)
-
-    for index, (model_name, result) in enumerate(results['details'].items()):
-        with col_layout_detailed[index % 2]:
-            
-            if details:
-                scrollable_textbox = f"""
-                <div style="
-                    font-family: 'Source Code Pro','monospace';
-                    font-size: 16px;
-                    overflow-y: scroll;
-                    border: 1px solid #000;
-                    padding: 10px;
-                    width: 500px;
-                    height: 400px;
-                ">
-                    {details}
-                </div>
-                """
-                st.markdown(f"**Detailed results for {model_name}**")
-                st.markdown(scrollable_textbox, unsafe_allow_html=True)
-            else:
-                st.markdown(f"**Detailed results for {model_name}**")
-                st.markdown(f"No objects detected by {model_name}. Please try a different image or adjust the model's confidence threshold.")
-
-
+    if details:
+        st.markdown(f"**Detailed results for {model_name}**")
+        scrollable_textbox = f"""
+        <div style="
+            font-family: 'Source Code Pro','monospace';
+            font-size: 16px;
+            overflow-y: scroll;
+            border: 1px solid #000;
+            padding: 10px;
+            width: 500px;
+            height: 400px;
+        ">
+            {details}
+        </div>
+        """
+        st.markdown(scrollable_textbox, unsafe_allow_html=True)
+    else:
+        st.markdown(f"**Detailed results for {model_name}**")
+        st.markdown(f"No objects detected by {model_name}.")
 
 
 
