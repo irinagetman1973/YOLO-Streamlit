@@ -24,7 +24,7 @@ import requests
 import json
 import numpy as np
 from firebase_admin import db, firestore
-
+import re
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
 import gc
 import time
@@ -408,30 +408,46 @@ def compare_models_function():
                 unsafe_allow_html=True
             )
 
+       
             if st.button('Save Results'):
                 data_to_save = []
-                
-                # Assuming aggregated_results is structured as {class_id: {model_name: count, ...}, ...}
-                for class_id, models_data in aggregated_results.items():
-                    for model_name, details in models_data.items():
-                        entry = {
-                            "model": model_name,
-                            "inference_details": {
-                                "class_id": class_id,
-                                "count": ['count']
-                                
-                            },
-                            "timestamp": {".sv": "timestamp"}
-                        }
-                        data_to_save.append(entry)
+                detailed_results = {}
 
+                # Process results from each model
+                for model_name, model_data in all_results.items():
+                    aggregated_results, detailed_results = parse_and_store_details(
+                        model_name, model_data, aggregated_results, detailed_results
+                    )
+
+                    # Prepare data for each detection in detailed_results
+                    for class_id, detections in detailed_results.items():
+                        for detection in detections:
+                            if detection['model'] == model_name:  # Ensure the detection belongs to the current model
+                                detection_entry = {
+                                    "model": model_name,
+                                    "inference_details": {
+                                        "class_id": class_id,
+                                        "count": aggregated_results.get(class_id, {}).get(model_name, 1),  # Get count from aggregated_results
+                                        "coordinates": detection['coordinates'],
+                                        "confidence": detection['confidence']
+                                    }
+                                }
+                                data_to_save.append(detection_entry)
+
+                # Debug: Print prepared data
+                # st.write("Data prepared for saving:", data_to_save)
+
+                # Now, save data to Firebase
                 try:
                     save_to_firebase(data_to_save, user_id)
                 except Exception as e:
                     st.error(f"Error saving data to Firebase: {e}")
+
         else:
             st.warning("User not logged in or user ID not available.")
-    
+
+
+
 
 def display_animation():
     lottie = """
@@ -513,6 +529,7 @@ def handle_v7_results(results, model_name):
 
 
 def handle_v8_results(results, model_name):
+
     if not isinstance(results, dict):
         raise ValueError("Expected results to be a dictionary.")
 
@@ -542,5 +559,110 @@ def handle_v8_results(results, model_name):
             st.markdown(f"**Detailed results for {model_name}**")
             st.markdown(f"No objects detected by {model_name}.")
 
+
+    
+
+
+def parse_and_store_details(model_name, results, aggregated_results, detailed_results):
+    # Check if the model is YOLOv7
+    if model_name in config.DETECTION_MODEL_LIST_V7:
+        count_dict = results.get(model_name, {}).get('count', {})
+        if count_dict:
+            for class_id, count_details in count_dict.items():
+                if class_id not in aggregated_results:
+                    aggregated_results[class_id] = {}
+                aggregated_results[class_id][model_name] = count_details['count']
+
+        details_str = results.get(model_name, {}).get('details', {})
+        # st.write("details_str:", details_str)
+
+        
+
+        detections = details_str.split('---')
+        
+        for detection in detections:
+            parts = detection.split('<br>')
+            class_id, coordinates, confidence = None, None, None
+            for part in parts:
+                if 'Object type:' in part:
+                    # Extracting class_id while removing HTML tags
+                    class_id_match = re.search(r"Object type:</b>\s*(\w+)", part)
+                    if class_id_match:
+                        class_id = class_id_match.group(1)
+                    else:
+                        print("Error parsing class ID:", part)
+                        class_id = None
+                elif 'Coordinates:' in part:
+                    # Extracting coordinates while removing HTML tags
+                    coordinates_match = re.search(r"Coordinates:</b>\s*(.+)", part)
+                    if coordinates_match:
+                        coordinates = coordinates_match.group(1)
+                    else:
+                        print("Error parsing coordinates:", part)
+                        coordinates = None
+                elif 'Confidence:' in part:
+                    # Using regular expression to extract the numeric confidence value
+                    match = re.search(r'(\d+(\.\d+)?)%', part)
+                    if match:
+                        confidence = float(match.group(1))
+                    else:
+                        print("Error parsing confidence value:", part)
+                        confidence = None
+
+            if class_id and coordinates and confidence is not None:
+                if class_id not in detailed_results:
+                    detailed_results[class_id] = []
+                detailed_results[class_id].append({
+                    'model': model_name,
+                    'coordinates': coordinates,
+                    'confidence': confidence
+                })
+
+
+    # Check if the model is YOLOv8
+    elif model_name in config.DETECTION_MODEL_LIST_V8:
+        count = results.get("count", {})
+        if count:
+            for class_id, count_value in count.items():
+                if class_id not in aggregated_results:
+                    aggregated_results[class_id] = {}
+                aggregated_results[class_id][model_name] = count_value
+     # Process detailed results for YOLOv8
+        details_str = results.get('details', " ")
+        # st.write("details_str:", details_str)
+        detections = details_str.split('---')
+        for detection in detections:
+            if not detection.strip():
+                continue  # Skip empty strings
+            parts = detection.split('<br>')
+            class_id, coordinates, confidence = None, None, None
+            for part in parts:
+                if 'Object type:' in part:
+                    class_id_match = re.search(r"Object type:</b>\s*(\w+)", part)
+                    if class_id_match:
+                        class_id = class_id_match.group(1)
+                elif 'Coordinates:' in part:
+                    coordinates_match = re.search(r"Coordinates:</b>\s*\[(.*?)\]", part)
+                    if coordinates_match:
+                        coordinates = coordinates_match.group(1)
+                elif 'Confidence:' in part:
+                    confidence_match = re.search(r'Confidence:</b>\s*(\d+(\.\d+)?)', part)
+                    if confidence_match:
+                        confidence = float(confidence_match.group(1))
+
+            if class_id and coordinates and confidence is not None:
+                if class_id not in detailed_results:
+                    detailed_results[class_id] = []
+                detailed_results[class_id].append({
+                    'model': model_name,
+                    'coordinates': coordinates,
+                    'confidence': confidence
+                })
+        
+    # st.write("aggregated results:", aggregated_results, "\nDetailed results :", detailed_results)
+    return aggregated_results, detailed_results
+
+
+    
 
 
