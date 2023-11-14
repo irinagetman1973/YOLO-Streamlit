@@ -263,11 +263,13 @@ def infer_uploaded_video(conf, model,uploaded_file):
                     st.info(f"This video frame rate: {frame_rate} frames per second")  # Display frame rate
 
                     total_frames = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
                     for frame_num in range(total_frames):
                         success, image = vid_cap.read()
                         if success:
-                            processed_frame = _display_detected_frames(conf, model, st_frame, image)
-                            out.write(processed_frame)
+                            if frame_num % 15 == 0:
+                                processed_frame = _display_detected_frames(conf, model, st_frame, image)
+                                out.write(processed_frame)
                             progress_bar.progress((frame_num + 1) / total_frames)
                         else:
                             break
@@ -279,8 +281,7 @@ def infer_uploaded_video(conf, model,uploaded_file):
                     vid_cap.release()  # Release the VideoCapture
 
                     st.success('Execution complete!')
-                    st.balloons()
-
+                    
                     st.session_state['execution_completed'] = True
         
    
