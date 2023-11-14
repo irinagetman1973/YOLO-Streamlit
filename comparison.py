@@ -12,21 +12,21 @@
 
 import streamlit as st
 from pathlib import Path
-import sys
-import io
+# import sys
+# import io
 from io import BytesIO
 from PIL import Image
 import cv2
 import config
 from utils_app import load_model, create_fig
 from au import db
-import requests
-import json
+# import requests
+# import json
 import numpy as np
-from firebase_admin import db, firestore
+from firebase_admin import db #firestore
 import re
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
-import gc
+#import gc
 import time
 
 
@@ -483,8 +483,8 @@ def update_v7_results(aggregated_results, results, model_name):
             if class_id not in aggregated_results:
                 aggregated_results[class_id] = {}
             aggregated_results[class_id][model_name] = count_details['count']
-    else:
-        st.write(f"No 'count' found in results for model: {model_name}")
+    # else:
+    #     st.write(f"No 'count' found in results for model: {model_name}")
  
 
 
@@ -556,8 +556,8 @@ def handle_v8_results(results, model_name):
             """
             st.markdown(scrollable_textbox, unsafe_allow_html=True)
         else:
-            st.markdown(f"**Detailed results for {model_name}**")
-            st.markdown(f"No objects detected by {model_name}.")
+            
+            st.markdown(f"No objects detected by {model_name}.Please try a different image or adjust the model's confidence threshold.")
 
 
     
