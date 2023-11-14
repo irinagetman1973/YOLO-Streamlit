@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 """
 -------------------------------------------------
    @File Name:     config.py
@@ -61,10 +60,30 @@ DETECTION_MODEL_LIST_V8 = [
 DETECTION_MODEL_LIST_V7 = [
     "yolov7.pt",
     "v7_champion.pt",
-    "yolo7-e6.pt",
+    "yolov7-e6.pt",
     "yolov7-w6.pt",
     "yolov7x.pt"
 ]
 
 OBJECT_COUNTER = None
 OBJECT_COUNTER1 = None
+
+# DL model config
+
+
+DETECTION_MODEL_DICT_V8 = {
+    "yolov8l.pt": YOLOv8l,
+    "yolov8m.pt": YOLOv8m,
+    "yolov8n.pt": YOLOv8n,
+    "yolov8x.pt": YOLOv8x,
+    "DriveWatch.pt": DriveWatch,
+    "v8_champion.pt": YOLOv8_Champion
+}
+
+DETECTION_MODEL_DICT_V7 = {
+    "yolov7.pt": YOLOv7,
+    "v7_champion.pt": YOLOv7_Champion,
+    "yolov7-e6.pt": YOLOv7_e6,
+    "yolov7-w6.pt": YOLOv7_w6,
+    "yolov7x.pt": YOLOv7x
+}
