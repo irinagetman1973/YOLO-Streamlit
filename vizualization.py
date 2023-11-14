@@ -10,6 +10,10 @@ import base64
 from datetime import datetime
 from matplotlib.figure import Figure
 
+
+# global df
+# df = None
+
 @st.cache_data
 def get_inference_data(user_id):
     ref = db.reference(f'/users/{user_id}/Inferences')
@@ -47,10 +51,11 @@ def get_logged_in_user_id():
   
 def to_excel(df):
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl', mode='xlsx') as writer:
-        df.to_excel(writer, sheet_name='Sheet1')
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        
+    output.seek(0)  # Go to the beginning of the stream
     return output.getvalue()
-
 
 
 def get_table_download_link(df, filename='data.xlsx', link_text='Download data as Excel'):
@@ -59,39 +64,223 @@ def get_table_download_link(df, filename='data.xlsx', link_text='Download data a
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">{link_text}</a>'
     return href
 
-def apply_filters(df, selected_models, selected_date_range, x1_range, y1_range, x2_range, y2_range, confidence_min, confidence_max):
-    # Single place to apply all filters
-    filtered_df = df[
-        (df['model'].isin(selected_models)) &
-        (df['timestamp'].dt.date >= selected_date_range[0]) &
-        (df['timestamp'].dt.date <= selected_date_range[1]) &
-        (df['x1'].between(*x1_range)) &
-        (df['y1'].between(*y1_range)) &
-        (df['x2'].between(*x2_range)) &  
-        (df['y2'].between(*y2_range)) &
-        (df['confidence'].between(confidence_min, confidence_max))
-    ]
-    return filtered_df
+
 
 def parse_coordinates(coord_str):
-            # Initialize a default value for coordinates
-            default_coord = [0, 0, 0, 0] # Example default value
-            # Check if 'coord_str' is a string and not NaN or any other type
-            if isinstance(coord_str, str):
-                  # Split the string by comma and convert to integers if possible
-                  try:
-                        return [int(part) for part in coord_str.split(',')]
-                  except ValueError:
-                        # Return the default value if conversion fails
-                        return default_coord
+    # Initialize a default dictionary for coordinates with keys
+    default_coord = {'x1': 0, 'y1': 0, 'x2': 0, 'y2': 0}
+    # Check if 'coord_str' is a string and not NaN or any other type
+    if isinstance(coord_str, str):
+        # Split the string by comma and convert to integers if possible
+        try:
+            parts = [int(part) for part in coord_str.split(',')]
+            return {'x1': parts[0], 'y1': parts[1], 'x2': parts[2], 'y2': parts[3]}
+        except (ValueError, IndexError):
+            # Return the default dictionary if conversion fails or not enough parts
+            return default_coord
+    else:
+        # Return the default dictionary if coord_str is not a string
+        return default_coord
+
+
+def preprocess_data(data):
+    # Initialize a list to store the flattened data
+    flattened_data = []
+
+    # Loop through each entry in the data
+    for entry in data:
+        for item in entry:
+            # Extract the timestamp and convert it to a readable date, if it exists
+            timestamp = item.get('timestamp', None)
+            readable_date = None
+            if timestamp:
+                readable_date = datetime.utcfromtimestamp(int(timestamp) / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Extract other details from the item
+            model = item.get('model', None)
+            inference_details = item.get('inference_details', {})
+            
+            # Check if inference_details is a dictionary and proceed
+            if isinstance(inference_details, dict):
+                # Add the timestamp and model to the details
+                inference_details['timestamp'] = readable_date
+                inference_details['model'] = model
+                
+                # Extract and clean 'count' data
+                count = inference_details.get('count', 1)
+                inference_details['count'] = parse_count(count)
+                
+            #     # Extract and clean 'coordinates' data, if present
+            #     if 'coordinates' in inference_details:
+            #         # The parse_coordinates now returns a dictionary
+            #         coords_dict = parse_coordinates(inference_details['coordinates'])
+            #         inference_details.update(coords_dict)
+                
+                # Append the cleaned details to the flattened_data list
+                flattened_data.append(inference_details)
+    
+    # Convert the flattened data into a pandas DataFrame
+    df = pd.DataFrame(flattened_data)
+    
+    # Convert the 'timestamp' column to datetime objects
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    
+    # Return the processed DataFrame
+    return df
+
+
+def parse_count(count):
+    # Ensure count is an integer, even when it's a list or in an unexpected format
+    if isinstance(count, list) and count and isinstance(count[0], (int, float)):
+        return int(count[0])
+    elif isinstance(count, (int, float)):
+        return int(count)
+    return 1  # Default to 1 if count is missing or in an unexpected format
+
+
+def generate_visualizations(df):
+    # Check if the DataFrame is empty
+    if df.empty:
+        st.write("No data to visualize.")
+        return
+
+    # Visualization 1: Bar Chart of Object Frequencies
+    st.subheader('Object Frequencies')
+    fig, ax = plt.subplots()
+    df['class_id'].value_counts().head(10).plot(kind='bar', ax=ax)
+    ax.set_ylabel('Frequency')
+    ax.set_title('Top 10 Detected Objects')
+    st.pyplot(fig)
+
+    # Visualization 2: Line Chart of Detections Over Time
+    st.subheader('Detections Over Time')
+    fig, ax = plt.subplots()
+    df.set_index('timestamp')['count'].resample('D').sum().plot(ax=ax)
+    ax.set_ylabel('Number of Detections')
+    ax.set_title('Daily Detections Trend')
+    st.pyplot(fig)
+
+    # Visualization 3: Confidence Score Distribution
+    st.subheader('Confidence Score Distribution')
+    fig, ax = plt.subplots()
+    sns.histplot(df, x='confidence', bins=20, kde=True, ax=ax)
+    ax.set_title('Confidence Scores Histogram')
+    st.pyplot(fig)
+
+    # Visualization 4: Heatmap of Detections by Model and Class
+    if 'model' in df.columns and 'class_id' in df.columns:
+        st.subheader('Heatmap of Detections by Model and Class')
+        pivot_table = pd.pivot_table(df, values='count', index='model', columns='class_id', aggfunc=np.sum, fill_value=0)
+        fig, ax = plt.subplots()
+        sns.heatmap(pivot_table, annot=True, fmt="d", cmap="YlGnBu", ax=ax)
+        ax.set_title('Detections by Model and Class')
+        st.pyplot(fig)
+
+    pass
+
+def get_filter_inputs(df, identifier):
+    # Sidebar interface for filter inputs
+    try:
+        if 'selected_models' not in st.session_state:
+            st.session_state['selected_models'] = []
+
+        # Model filter
+        model_options = df['model'].unique().tolist()
+
+        # Use the identifier to create a truly unique key for the multiselect widget
+        st.sidebar.divider()
+       
+       
+
+        st.sidebar.markdown("### 📇 Select the parameters below to filter the dataset.")
+        selected_models = st.sidebar.multiselect(
+            'Select Model(s)',
+            model_options,
+            default=st.session_state['selected_models']
+        )
+
+        st.session_state['selected_models'] = selected_models
+
+        # Date filter
+        df['timestamp'] = pd.to_datetime(df['timestamp'])  # Ensure timestamp is in datetime format
+        date_min = df['timestamp'].min().date()
+        date_max = df['timestamp'].max().date()
+        selected_date_range = st.sidebar.date_input('Select Date Range', [date_min, date_max])
+
+        # Return a dictionary of filter options
+        filter_options = {
+            'selected_models': selected_models,
+            'selected_date_range': selected_date_range
+        }
+
+        return filter_options
+
+    except Exception as e:
+        st.error(f"Error in get_filter_inputs: {e}")
+        # If there's an error, you can return an empty dictionary or some default values
+        return {}
+
+def apply_filters():
+      # Check if 'df' and 'filter_options' are available in the session state
+      # st.write("apply_filters started...")
+      if 'df' in st.session_state and 'filter_options' in st.session_state:
+            df = st.session_state['df']
+            filter_options = st.session_state['filter_options']
+
+            # st.write("Debug - apply_filters called")  # Confirm the function is called
+
+            # Unpack filter options
+            selected_models = filter_options['selected_models']
+            selected_date_range = filter_options['selected_date_range']
+
+            # Apply filters to the DataFrame
+            # Only applying model and date range filters
+            filtered_df = df[
+                  df['model'].isin(selected_models) &
+                  df['timestamp'].dt.date.between(*selected_date_range)
+            ]
+            
+            # Update the session state with the filtered dataframe
+            st.session_state['filtered_data'] = filtered_df
+            st.session_state['filtered'] = True
+
+            # Provide feedback about the operation
+            if filtered_df.empty:
+                  st.sidebar.warning("No data matches the filters.")
+                  # st.write("Debug - No data matches the filters.")  # Debug print
             else:
-                  # Return the default value if coord_str is not a string
-                  return default_coord
+                  st.sidebar.success(f"Filtered data contains {len(filtered_df)} rows.")
+                  # st.write(f"Debug - Filtered data contains {len(filtered_df)} rows.")  # Debug print
+
+            # Refresh the page to reflect changes
+            # st.experimental_rerun()
+
+      else:
+            st.sidebar.error("Data or filter options are not set in the session state.")
+            # st.write("Debug - Data or filter options are not set in the session state.")  # Debug print
+
+
+
+
+def update_filtered_data():
+    # Check if the dataframe is available in the session state
+    if 'df' in st.session_state and 'class_id' in st.session_state['df']:
+        # Get the current selection from session state
+        selected_value = st.session_state.class_id_select
+        # Update the filtered dataframe in the session state
+        st.session_state.filtered_data = st.session_state['df'][st.session_state['df']['class_id'] == selected_value]
+
+
+
+    
 
 def visualize_inferences():
 
-      
-      
+      st.session_state['filtered'] = False
+      # Ensure that 'filtered_data' is initialized in the session state
+      if 'filtered_data' not in st.session_state:
+            st.session_state.filtered_data = pd.DataFrame()
+     
      
       user_id = get_logged_in_user_id()
       
@@ -107,114 +296,26 @@ def visualize_inferences():
         st.write("It seems there's an issue with your data or you don't have any data uploaded yet.")
         st.write("Upload your data and start seeing insights")
         return
-      # Flattening the nested structure
-      flattened_data = []
-      for entry in data:
-            for item in entry:
-                  timestamp = item.get('timestamp', None)
-                  if timestamp:
-                        readable_date = datetime.utcfromtimestamp(int(timestamp) / 1000).strftime('%Y-%m-%d %H:%M:%S')
-                  else:
-                        readable_date = None
-                  model = item.get('model', None)
-
-                  inference_details = item.get('inference_details', {})
-                  if isinstance(inference_details, dict):
-                        inference_details['timestamp'] = readable_date
-                        inference_details['model'] = model
-
-                        # Robust handling of 'count'
-                        count = inference_details.get('count', 1)
-                        if isinstance(count, list):
-                              if count and isinstance(count[0], (int, float)):  # Check if first element is a number
-                                    inference_details['count'] = int(count[0])
-                              else:
-                                    inference_details['count'] = 1  # Default value if list is empty or non-numeric
-                        elif isinstance(count, (int, float)):
-                              inference_details['count'] = int(count)
-                        else:
-                              inference_details['count'] = 1  # Default value if count is not numeric
-
-                        flattened_data.append(inference_details)
-
-
-
-      df = pd.DataFrame(flattened_data)
+ 
       
 
       st.header('📊 :green[Visualizations & Insights]')
       st.divider()
+      
+      df = preprocess_data(data)
+      # Store the processed DataFrame in the session state
+      st.session_state.df = df
+      if df.empty:
+        st.error("Processed data is empty.")
+        return
 
-
+        
       
 
-      # Filtering options
-      st.sidebar.header('Filter Options')
-
-      # Model filter
-      model_options = df['model'].unique().tolist()
-      selected_models = st.sidebar.multiselect('Select Model(s)', model_options, default=model_options)
-
-      # Convert the 'timestamp' to a datetime object and then to a date object
-      df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-      # Date filter
-      date_min = df['timestamp'].min()
-      date_max = df['timestamp'].max()
-      selected_date_range = st.sidebar.date_input('Select Date Range', [date_min, date_max])
-
-      
-           
-
-     
-      
-
-
-      # Apply the function to the 'coordinates' column
-      df['parsed_coordinates'] = df['coordinates'].apply(parse_coordinates)
-
-      # Create separate columns for each coordinate component
-      df['x1'] = df['parsed_coordinates'].apply(lambda coords: coords[0] if coords else None)
-      df['y1'] = df['parsed_coordinates'].apply(lambda coords: coords[1] if coords else None)
-      df['x2'] = df['parsed_coordinates'].apply(lambda coords: coords[2] if coords else None)
-      df['y2'] = df['parsed_coordinates'].apply(lambda coords: coords[3] if coords else None)
-
-      # Slider for x1 coordinate
-      x1_min, x1_max = df['x1'].min(), df['x1'].max()
-      x1_range = st.sidebar.slider('Select X1 Coordinate Range', x1_min, x1_max, (x1_min, x1_max))
-
-      # Slider for y1 coordinate
-      y1_min, y1_max = df['y1'].min(), df['y1'].max()
-      y1_range = st.sidebar.slider('Select Y1 Coordinate Range', y1_min, y1_max, (y1_min, y1_max))
-
-      # Slider for x2 coordinate
-      x2_min, x2_max = df['x2'].min(), df['x2'].max()
-      x2_range = st.sidebar.slider('Select X2 Coordinate Range', x2_min, x2_max, (x2_min, x2_max))
-
-      # Slider for y2 coordinate
-      y2_min, y2_max = df['y2'].min(), df['y2'].max()
-      y2_range = st.sidebar.slider('Select Y2 Coordinate Range', y2_min, y2_max, (y2_min, y2_max))
-
-
-      # Confidence filter
-      confidence_min, confidence_max = st.sidebar.slider('Select Confidence Score Range', 0.0, 1.0, (0.0, 1.0))
-
-      
-      if len(selected_date_range) == 2:
-            # Apply filters to the dataframe
-            filtered_df = df[
-            (df['model'].isin(selected_models)) &
-            (df['timestamp'].dt.date >= selected_date_range[0]) &
-            (df['timestamp'].dt.date <= selected_date_range[1]) &
-            (df['x1'].between(*x1_range)) &
-            (df['y1'].between(*y1_range)) &
-            (df['x2'].between(*x2_range)) &  
-            (df['y2'].between(*y2_range)) &
-            (df['confidence'].between(confidence_min, confidence_max))
-            ]
+    
 
       # Create an expander for Summary Statistics
-      with st.expander("**Summary Statistics** ", expanded=True):
+      with st.expander("**Summary Statistics** ", expanded=False):
       
             st.subheader(':blue[Summary Statistics] 📈')
             st.markdown(f"**Total inferences:** {len(df)}")
@@ -250,35 +351,74 @@ def visualize_inferences():
                   st.pyplot(fig2, use_container_width=True)
       
       
+      filter_options = get_filter_inputs(df, 'inferences')
+      st.session_state['filter_options'] = filter_options
+      # Assuming df is already in session_state and has been preprocessed
+      if 'filtered_data' not in st.session_state:
+            st.session_state['filtered_data'] = st.session_state.get('df', pd.DataFrame())
+     
 
       
-     
+      # When the user clicks the 'Apply Filters' button, apply the filters.
+      if st.sidebar.button('Apply Filters'):
+             apply_filters()
+
+            
+    
+
+
+      
+
       # Layout for data table and filter options
       col1, col2 = st.columns(2)
 
       with col1:
             with st.expander("Data", expanded=True):
-                  st.subheader('Data Table')
+                  st.subheader("📜 :blue[**Data table**]")
                   st.dataframe(df)
                   st.download_button(
                         label="Download Data as Excel",
-                        data=get_table_download_link(df),
+                        data=to_excel(df),
                         file_name='full_data.xlsx',
-                        mime='application/vnd.ms-excel'
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   )
-
+      
       with col2:
-            with st.expander("Filter Options", expanded=False):
-                  selected_value = st.selectbox('Choose a value', df['class_id'].unique())
-                  filtered_df = df[df['class_id'] == selected_value]
-                  st.subheader("Filtered Data Table")
-                  st.dataframe(filtered_df)
-                  st.download_button(
-                        label="Download Filtered Data as Excel",
-                        data=get_table_download_link(filtered_df),
-                        file_name='filtered_data.xlsx',
-                        mime='application/vnd.ms-excel'
-                  )
+         
+            with st.expander("Filter Options", expanded=True):
+                  # Ensure 'df' and 'class_id' are in session state and have data before creating the selectbox
+                  if 'df' in st.session_state and 'class_id' in st.session_state.df.columns and not st.session_state.df.empty:
+                        # class_ids = st.session_state.df['class_id'].unique()
+                        # selected_value = st.selectbox(
+                        # 'Choose a value',
+                        # options=class_ids,
+                        # index=0,
+                        # key='class_id_select',
+                        # on_change=update_filtered_data  # This line ensures update_filtered_data is called on value change
+                        # )
+
+                        st.subheader("🔍:blue[**Filtered Data Table**]")
+                        st.dataframe(st.session_state.filtered_data)  # Display the filtered data from session state
+
+                        # Download button for filtered data
+                        st.download_button(
+                        label="Download Excel file",
+                        data=to_excel(df),
+                        file_name="data.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                  else:
+                        st.write("Please select a class ID to display the data.")
+                        
+      
+
+      # # Use the filtered DataFrame for further processing or visualization
+      # st.write(filtered_df.head())
+      # if 'filtered_data' in st.session_state and not st.session_state['filtered_data'].empty:
+      #       st.dataframe(st.session_state['filtered_data'].describe())
+      # else:
+      #       st.write("No data available to display.")
+      
 
       
       # Visualization toggle
