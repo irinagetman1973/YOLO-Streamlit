@@ -58,11 +58,7 @@ def to_excel(df):
     return output.getvalue()
 
 
-def get_table_download_link(df, filename='data.xlsx', link_text='Download data as Excel'):
-    excel_data = to_excel(df)
-    b64 = base64.b64encode(excel_data).decode()  # Bytes to string
-    href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">{link_text}</a>'
-    return href
+
 
 
 
@@ -139,77 +135,113 @@ def parse_count(count):
 
 
 def generate_visualizations(df):
-    # Check if the DataFrame is empty
-    if df.empty:
-        st.write("No data to visualize.")
-        return
+      # Check if the DataFrame is empty
+      if df.empty:
+            st.write("No data to visualize.")
+            return
 
-    # Visualization 1: Bar Chart of Object Frequencies
-    st.subheader('Object Frequencies')
-    fig, ax = plt.subplots()
-    df['class_id'].value_counts().head(10).plot(kind='bar', ax=ax)
-    ax.set_ylabel('Frequency')
-    ax.set_title('Top 10 Detected Objects')
-    st.pyplot(fig)
+      # Create a two-column layout
+      col1, col2 = st.columns(2)
+      
+      # Visualization 1: Bar Chart of Object Frequencies
+      with col1:
+            st.subheader('Object Frequencies')
+            fig, ax = plt.subplots()
+            df['class_id'].value_counts().head(10).plot(kind='bar',  ax=ax)
+            ax.set_ylabel('Frequency')
+            ax.set_title('Top 10 Detected Objects')
+            st.pyplot(fig)
 
-    # Visualization 2: Line Chart of Detections Over Time
-    st.subheader('Detections Over Time')
-    fig, ax = plt.subplots()
-    df.set_index('timestamp')['count'].resample('D').sum().plot(ax=ax)
-    ax.set_ylabel('Number of Detections')
-    ax.set_title('Daily Detections Trend')
-    st.pyplot(fig)
+      # Visualization 2: Line Chart of Detections Over Time
+      with col2:
+            st.subheader('Detections Over Time')
+            fig, ax = plt.subplots()
+            df.set_index('timestamp')['count'].resample('D').sum().plot(ax=ax)
+            ax.set_ylabel('Number of Detections')
+            ax.set_title('Daily Detections Trend')
+            st.pyplot(fig)
 
-    # Visualization 3: Confidence Score Distribution
-    st.subheader('Confidence Score Distribution')
-    fig, ax = plt.subplots()
-    sns.histplot(df, x='confidence', bins=20, kde=True, ax=ax)
-    ax.set_title('Confidence Scores Histogram')
-    st.pyplot(fig)
+          # Visualization: Confidence Score Distribution with distinct colors for each class_id
+      with col1:  
+            st.subheader('Confidence Score Distribution by Class ID')
+            plt.figure(figsize=(10, 6))
+            ax = plt.gca()
+            
+            # Extract unique class IDs and colors from the palette
+            class_ids = df['class_id'].unique()
+            colors = sns.color_palette('Set2', n_colors=len(class_ids))
+            
+            # Plot histogram for each class ID
+            for i, class_id in enumerate(class_ids):
+                  class_df = df[df['class_id'] == class_id]
+                  sns.histplot(class_df, x='confidence', color=colors[i], bins=20, kde=False, ax=ax, label=class_id)
 
-    # Visualization 4: Heatmap of Detections by Model and Class
-    if 'model' in df.columns and 'class_id' in df.columns:
-        st.subheader('Heatmap of Detections by Model and Class')
-        pivot_table = pd.pivot_table(df, values='count', index='model', columns='class_id', aggfunc=np.sum, fill_value=0)
-        fig, ax = plt.subplots()
-        sns.heatmap(pivot_table, annot=True, fmt="d", cmap="YlGnBu", ax=ax)
-        ax.set_title('Detections by Model and Class')
-        st.pyplot(fig)
+            ax.set_title('Confidence Scores Histogram by Class ID')
+            ax.set_xlabel('Confidence Score')
+            ax.set_ylabel('Frequency')
+            ax.legend(title='Class ID')
 
-    pass
+            st.pyplot(plt.gcf())
+      # Visualization 4: Heatmap of Detections by Model and Class
+      with col2:
+            if 'model' in df.columns and 'class_id' in df.columns:
+                  st.subheader('Heatmap of Detections by Model and Class')
+                  pivot_table = pd.pivot_table(df, values='count', index='model', columns='class_id', aggfunc=np.sum, fill_value=0)
+                  fig, ax = plt.subplots()
+                  sns.heatmap(pivot_table, annot=True, fmt="d", cmap="YlGnBu", ax=ax)
+                  ax.set_title('Detections by Model and Class')
+                  st.pyplot(fig)
+      
+
+
 
 def get_filter_inputs(df, identifier):
     # Sidebar interface for filter inputs
     try:
+        # Ensure the default values are lists in the session state
         if 'selected_models' not in st.session_state:
             st.session_state['selected_models'] = []
+        if 'selected_class_ids' not in st.session_state:
+            st.session_state['selected_class_ids'] = []
 
         # Model filter
         model_options = df['model'].unique().tolist()
-
-        # Use the identifier to create a truly unique key for the multiselect widget
         st.sidebar.divider()
-       
-       
-
         st.sidebar.markdown("### 📇 Select the parameters below to filter the dataset.")
         selected_models = st.sidebar.multiselect(
             'Select Model(s)',
             model_options,
             default=st.session_state['selected_models']
         )
-
         st.session_state['selected_models'] = selected_models
+
+        # Class ID filter - dynamically update based on selected models
+        if selected_models:  # If specific models are selected, filter the options for class_ids
+            class_id_options = df[df['model'].isin(selected_models)]['class_id'].unique().tolist()
+        else:  # If no model is selected, show all class_id options
+            class_id_options = df['class_id'].unique().tolist()
+
+        selected_class_ids = st.sidebar.multiselect(
+            'Select Class ID(s)',
+            class_id_options,
+            default=st.session_state['selected_class_ids']
+        )
+        # Update the session state only if class IDs are selected, otherwise default to all
+        st.session_state['selected_class_ids'] = selected_class_ids if selected_class_ids else class_id_options
 
         # Date filter
         df['timestamp'] = pd.to_datetime(df['timestamp'])  # Ensure timestamp is in datetime format
         date_min = df['timestamp'].min().date()
         date_max = df['timestamp'].max().date()
-        selected_date_range = st.sidebar.date_input('Select Date Range', [date_min, date_max])
+        selected_date_range = st.sidebar.date_input(
+            'Select Date Range', 
+            [date_min, date_max]
+        )
 
         # Return a dictionary of filter options
         filter_options = {
             'selected_models': selected_models,
+            'selected_class_ids': selected_class_ids or class_id_options,  # Use all if none selected
             'selected_date_range': selected_date_range
         }
 
@@ -217,47 +249,46 @@ def get_filter_inputs(df, identifier):
 
     except Exception as e:
         st.error(f"Error in get_filter_inputs: {e}")
-        # If there's an error, you can return an empty dictionary or some default values
+        # If there's an error, return an empty dictionary or some default values
         return {}
 
+
+
 def apply_filters():
-      # Check if 'df' and 'filter_options' are available in the session state
-      # st.write("apply_filters started...")
-      if 'df' in st.session_state and 'filter_options' in st.session_state:
-            df = st.session_state['df']
-            filter_options = st.session_state['filter_options']
+    # Check if 'df' and 'filter_options' are available in the session state
+    if 'df' in st.session_state and 'filter_options' in st.session_state:
+        df = st.session_state['df']
+        filter_options = st.session_state['filter_options']
 
-            # st.write("Debug - apply_filters called")  # Confirm the function is called
+        # Unpack filter options
+        selected_models = filter_options['selected_models']
+        selected_class_ids = filter_options['selected_class_ids']  # Unpack the selected_class_ids
+        selected_date_range = filter_options['selected_date_range']
 
-            # Unpack filter options
-            selected_models = filter_options['selected_models']
-            selected_date_range = filter_options['selected_date_range']
+        # Apply filters to the DataFrame
+        # Applying model, class_id, and date range filters
+        filtered_df = df[
+            df['model'].isin(selected_models) &
+            df['class_id'].isin(selected_class_ids) &  # Apply class_id filter
+            df['timestamp'].dt.date.between(*selected_date_range)
+        ]
+        
+        # Update the session state with the filtered dataframe
+        st.session_state['filtered_data'] = filtered_df
+        st.session_state['filtered'] = True
 
-            # Apply filters to the DataFrame
-            # Only applying model and date range filters
-            filtered_df = df[
-                  df['model'].isin(selected_models) &
-                  df['timestamp'].dt.date.between(*selected_date_range)
-            ]
-            
-            # Update the session state with the filtered dataframe
-            st.session_state['filtered_data'] = filtered_df
-            st.session_state['filtered'] = True
+        # Provide feedback about the operation
+        if filtered_df.empty:
+            st.sidebar.warning("No data matches the filters.")
+        else:
+            st.sidebar.success(f"Filtered data contains {len(filtered_df)} rows.")
 
-            # Provide feedback about the operation
-            if filtered_df.empty:
-                  st.sidebar.warning("No data matches the filters.")
-                  # st.write("Debug - No data matches the filters.")  # Debug print
-            else:
-                  st.sidebar.success(f"Filtered data contains {len(filtered_df)} rows.")
-                  # st.write(f"Debug - Filtered data contains {len(filtered_df)} rows.")  # Debug print
+        # No need to rerun the page unless there is a specific reason to do so
+        # st.experimental_rerun()
 
-            # Refresh the page to reflect changes
-            # st.experimental_rerun()
+    else:
+        st.sidebar.error("Data or filter options are not set in the session state.")
 
-      else:
-            st.sidebar.error("Data or filter options are not set in the session state.")
-            # st.write("Debug - Data or filter options are not set in the session state.")  # Debug print
 
 
 
@@ -310,10 +341,6 @@ def visualize_inferences():
         return
 
         
-      
-
-    
-
       # Create an expander for Summary Statistics
       with st.expander("**Summary Statistics** ", expanded=False):
       
@@ -363,12 +390,6 @@ def visualize_inferences():
       if st.sidebar.button('Apply Filters'):
              apply_filters()
 
-            
-    
-
-
-      
-
       # Layout for data table and filter options
       col1, col2 = st.columns(2)
 
@@ -388,14 +409,7 @@ def visualize_inferences():
             with st.expander("Filter Options", expanded=True):
                   # Ensure 'df' and 'class_id' are in session state and have data before creating the selectbox
                   if 'df' in st.session_state and 'class_id' in st.session_state.df.columns and not st.session_state.df.empty:
-                        # class_ids = st.session_state.df['class_id'].unique()
-                        # selected_value = st.selectbox(
-                        # 'Choose a value',
-                        # options=class_ids,
-                        # index=0,
-                        # key='class_id_select',
-                        # on_change=update_filtered_data  # This line ensures update_filtered_data is called on value change
-                        # )
+                       
 
                         st.subheader("🔍:blue[**Filtered Data Table**]")
                         st.dataframe(st.session_state.filtered_data)  # Display the filtered data from session state
@@ -412,101 +426,20 @@ def visualize_inferences():
                         
       
 
-      # # Use the filtered DataFrame for further processing or visualization
-      # st.write(filtered_df.head())
-      # if 'filtered_data' in st.session_state and not st.session_state['filtered_data'].empty:
-      #       st.dataframe(st.session_state['filtered_data'].describe())
-      # else:
-      #       st.write("No data available to display.")
-      
+     
 
       
       # Visualization toggle
       show_filtered_viz = st.checkbox('Show Visualizations for Filtered Data')
-      if show_filtered_viz and 'class_id' in df.columns:
-            with st.container():
-                  st.subheader(f'Visualizations for {selected_value}')
-                  
-                  # Organizing plots in columns
-                  col1, col2, col3, col4 = st.columns(4)
-
-                  with col1:
-                        # Plot for Total Detections Over Time for the selected class_id
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        filtered_df.set_index('timestamp')['count'].plot(ax=ax)
-                        ax.set_title(f"Detections of {selected_value} Over Time")
-                        ax.set_ylabel('Count')
-                        ax.set_xlabel('Timestamp')
-                        ax.tick_params(axis='x', rotation=45)
-                        st.pyplot(fig)
-                        # Download button for the Total Detections Over Time plot
-                        st.download_button(
-                        label="Download Total Detections Plot",
-                        data=get_plot_as_image(fig),
-                        file_name='total_detections.png',
-                        mime='image/png'
-                        )
-
-                  with col2:
-                        # Histogram for Confidence Score Distribution
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        filtered_df['confidence'].plot(kind='hist', ax=ax, bins=20)
-                        ax.set_title(f"Confidence Score Distribution for {selected_value}")
-                        ax.set_ylabel('Frequency')
-                        ax.set_xlabel('Confidence Score')
-                        st.pyplot(fig)
-                        # Download button for the Confidence Score Distribution plot
-                        st.download_button(
-                        label="Download Confidence Distribution Plot",
-                        data=get_plot_as_image(fig),
-                        file_name='confidence_distribution.png',
-                        mime='image/png'
-                        )
-                  
-                  col3, col4 = st.columns(2)
-                  
-                  with col3:
-                        # Boxplot for Detection Count Spread
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        filtered_df.boxplot(column=['count'], ax=ax)
-                        ax.set_title(f"Detection Count Spread for {selected_value}")
-                        ax.set_ylabel('Count')
-                        st.pyplot(fig)
-                        # Download button for the Detection Count Spread plot
-                        st.download_button(
-                              label="Download Detection Count Spread Plot",
-                              data=get_plot_as_image(fig),
-                              file_name='detection_count_spread.png',
-                              mime='image/png'
-                        )
-                  
-                  with col4:
-                        # Scatter Plot for Confidence vs. Count
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        filtered_df.plot(kind='scatter', x='confidence', y='count', ax=ax)
-                        ax.set_title(f"Confidence vs. Count for {selected_value}")
-                        ax.set_ylabel('Count')
-                        ax.set_xlabel('Confidence Score')
-                        st.pyplot(fig)
-                        # Download button for the Confidence vs. Count plot
-                        st.download_button(
-                        label="Download Confidence vs Count Plot",
-                        data=get_plot_as_image(fig),
-                        file_name='confidence_vs_count.png',
-                        mime='image/png'
-                        )
-                        
+      if show_filtered_viz:
+            generate_visualizations(st.session_state.filtered_data)
+                       
                  
-
-
-
-                     
-
  #---------------Time Series Visualization------------------------------------#                 
       with st.expander("**Historical Detection Analysis**", expanded=False):
       
             st.subheader(':blue[Detection Trends Over Time] 📅')
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             
             # Convert the timestamp column to datetime format
             df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -547,7 +480,7 @@ def visualize_inferences():
                         ax.tick_params(axis='x', rotation=45)
                         st.pyplot(fig)
 
-            with col3:
+            with col1:
                   st.write(':green[**Model Utilization Over Time**]')
                   fig, ax = plt.subplots(figsize=(10, 5))
                   df_model_usage = df.groupby(['timestamp', 'model']).size().unstack().fillna(0)
@@ -557,20 +490,7 @@ def visualize_inferences():
                   ax.tick_params(axis='x', rotation=45)
                   st.pyplot(fig)
 
-            # with col3:
-            #       # 3. Average Count of Detections Over Time
-            #       st.write(':green[**Average Count of Detections Over Time**]')
-            #       fig, ax = plt.subplots(figsize=(10, 5))
-            #       avg_detections = df.groupby("timestamp")["count"].mean()
-            #       avg_detections.plot(kind='line', color=colors[2], ax=ax)
-            #       # Setting the date format
-            #       date_format = DateFormatter("%Y-%m-%d %H:%M")
-            #       ax.xaxis.set_major_formatter(date_format)
-            #       ax.set_title("Average Count of Detections Over Time", fontdict=font)
-            #       ax.set_ylabel("Average Count", fontdict=font)
-            #       ax.set_xlabel("Timestamp", fontdict=font)
-            #       ax.tick_params(axis='x', rotation=45)
-            #       st.pyplot(fig)
+
 
 
       
