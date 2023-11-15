@@ -119,11 +119,11 @@ def display_footer():
                 width: 100%;
                 background-color: #FFFFFF;
                 text-align: center;
-                padding: 10px;
+                padding: 5px;
             }
         </style>
         <div class="footer">
-            <p>&copy; 2023 Atomic Habits | Email: <a href="mailto:atomichabitsforlife@gmail.com">atomichabitsforlife@gmail.com</a> | 
+            <p> 🥝 &copy; 2023 Atomic Habits | Email: <a href="mailto:atomichabitsforlife@gmail.com">atomichabitsforlife@gmail.com</a> | 
             LinkedIn: <a href="https://www.linkedin.com/in/irina-getman-16871b165/" target="_blank">Irina Getman</a></p>
         </div>
         """, 

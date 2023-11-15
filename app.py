@@ -4,7 +4,7 @@ import config
 from utils_app import load_model, infer_uploaded_image, infer_uploaded_video
 from streamlit_lottie import st_lottie
 import requests
-
+from feedback import feedback_ui
 import json
 from au import authenticate
 
@@ -33,7 +33,7 @@ def display_main_page():
     
     # st.image('images/banner.jpg', use_column_width=True)
         # Sidebar
-    st.sidebar.header("YOLO Models")
+    st.sidebar.header(" 🚀 YOLOv8 Models")
 
     
 
@@ -48,7 +48,7 @@ def display_main_page():
 
     model_path = ""
     if model_type:
-        model_path = Path(config.DETECTION_MODEL_DIRV_V8, str(model_type))
+        model_path = Path(config.DETECTION_MODEL_DIR_V8, str(model_type))
     else:
         st.error("Please Select Model in Sidebar")
 
@@ -62,7 +62,7 @@ def display_main_page():
    
     #--------------Image/video options-------------------
 
-    st.sidebar.header("Image/Video Upload")
+    st.sidebar.header("🖼️ Image/Video Upload")
     source_selectbox = st.sidebar.selectbox(
             "Select Source",
             config.SOURCES_LIST
@@ -70,8 +70,20 @@ def display_main_page():
 
     uploaded_file = st.sidebar.file_uploader(label="Choose a file...")
 
+
+    # # Check if the "Leave Feedback" button was pressed
+    # if 'feedback_clicked' not in st.session_state:
+    #     st.session_state['feedback_clicked'] = False
+
+    # if st.sidebar.button('Leave Feedback'):
+    #     st.session_state['feedback_clicked'] = True
+
+
+
         # Check if a file has been uploaded or instructions have been displayed before:
     if uploaded_file is None :
+     
+       
             st.session_state['instructions_displayed'] = True  
             
             lottie = """
@@ -99,7 +111,7 @@ def display_main_page():
             st.title("Welcome to the :green[**_YOLO_**] models evaluation app!")
             st.divider()
 
-            col1, col2 = st.columns([0.7, 0.3])  # Create a 2-column layout with equal width for each column
+            col1, col2 = st.columns([0.6, 0.3])  # Create a 2-column layout with equal width for each column
 
             with col1:
                     
@@ -107,11 +119,16 @@ def display_main_page():
                     
 
                     # Step 1
+
+                    st.write(":star: **Sign Up for Enhanced Features:**")
+                    st.write ("Become a registered user to unlock advanced features like comparing YOLOv7 model performances, viewing statistics, and saving data as Excel sheets." )
+                    st.divider()
+                    st.subheader(" :green[How to start:] ")
                     st.write(":one: :blue[**Choose a YOLOv8 Model:**]")
                     st.write("""
                     In the sidebar, you'll find a dropdown box where you can select from different YOLOv8 models:
                     - :green[**8l:**] This model has a larger size and offers higher accuracy.
-                    - :green[**8m:**] yA medium-sized model offering a good balance between size, speed, and accuracy.
+                    - :green[**8m:**] A medium-sized model offering a good balance between size, speed, and accuracy.
                     - :green[**8s:**] A smaller model, faster but with slightly lower accuracy.
                     - :green[**8x:**] An extended model with more layers, providing higher accuracy but at the cost of speed.
                     - :green[**8n:**] A nominal model that provides a balance between size and accuracy.
@@ -144,23 +161,10 @@ def display_main_page():
 
             
                 
-                
-                
-                
-                
-             
-   
     if uploaded_file:
         if source_selectbox == config.SOURCES_LIST[0]:  # Image
             infer_uploaded_image(confidence, model, uploaded_file)
         elif source_selectbox == config.SOURCES_LIST[1]:  # Video
             infer_uploaded_video(confidence, model, uploaded_file)
-    # else:
-    #     st.error("Please upload a file.")
 
     
-
-
-# if __name__ == "__main__":
-#     main()
-

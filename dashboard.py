@@ -3,19 +3,14 @@ import time
 from comparison import compare_models_function
 import config
 from vizualization import visualize_inferences
+from feedback import feedback_ui
 
-
-# Placeholder for stored results. 
-stored_results = [
-    {"image_name": "image1.jpg", "model": "YOLOv7", "objects_detected": 5, "image_link": "link_to_image1"},
-    {"image_name": "image2.jpg", "model": "YOLOv7", "objects_detected": 3, "image_link": "link_to_image2"},
-]
 
 def display_dashboard():   
   
     
 
-    dashboard_sections = ["Compare models", "Statistics", "Query Tool", "Entry Management", "Feedback Section"]
+    dashboard_sections = ["Compare models", "Statistics", "Feedback Section"]
 
         # By default, the section is set to None to show the instruction page.
     section = st.session_state.get('dashboard_section', "")
@@ -78,17 +73,11 @@ def display_dashboard():
 
             st.divider()
 
-            # Query Tool
-            st.markdown("""
-            **:three: **Query Tool**:**
-            Use our search tool to find specific entries quickly and efficiently.
-            """)
-
-            st.divider()
+            
 
             # Feedback
             st.markdown("""
-            **:four: **Feedback**:**
+            **:three: **Feedback**:**
             We value your input! Share your feedback  to help us improve.
             """)
 
@@ -111,33 +100,29 @@ def display_dashboard():
 
      
 
-    elif section == "Query Tool":
-        query = st.text_input("Search for an entry")
-        if query:
-            st.write(f"Results for '{query}' will be displayed here.")
-
-    elif section == "Entry Management":
-        st.write("Options to edit or delete specific entries will be here.")
+    
 
     elif section == "Feedback Section":
+
+        feedback_ui()
        
-        feedback = st.text_area("Leave your feedback")
-        if st.button("Submit Feedback"):
-            st.write("Thank you for your feedback!")  # Placeholder. You'd typically save this feedback in a database.
+        # feedback = st.text_area("Leave your feedback")
+        # if st.button("Submit Feedback"):
+        #     st.write("Thank you for your feedback!")  # Placeholder. You'd typically save this feedback in a database.
 
-        st.write("---")  # Line separator for clarity
+        # st.write("---")  # Line separator for clarity
 
-        # GitHub link with emojis and animation
-        st.write("If you liked my app, please, give me a star! :point_down:")
-        github_link = "[![Star on GitHub](https://img.shields.io/github/stars/irinagetman1973/Urban-Vehicle-Detection-via-DL?style=social)](https://github.com/irinagetman1973/Urban-Vehicle-Detection-via-DL)"
-        st.markdown(github_link, unsafe_allow_html=True)
+        # # GitHub link with emojis and animation
+        # st.write("If you liked my app, please, give me a star! :point_down:")
+        # github_link = "[![Star on GitHub](https://img.shields.io/github/stars/irinagetman1973/Urban-Vehicle-Detection-via-DL?style=social)](https://github.com/irinagetman1973/Urban-Vehicle-Detection-via-DL)"
+        # st.markdown(github_link, unsafe_allow_html=True)
 
-        # Simple blinking animation for the star emoji
-        placeholder = st.empty()
-        for _ in range(5):  # Blink for 5 times
-            placeholder.markdown(":star:")
-            time.sleep(0.5)
-            placeholder.markdown(" ")
-            time.sleep(0.5)
+        # # Simple blinking animation for the star emoji
+        # placeholder = st.empty()
+        # for _ in range(5):  # Blink for 5 times
+        #     placeholder.markdown(":star:")
+        #     time.sleep(0.5)
+        #     placeholder.markdown(" ")
+        #     time.sleep(0.5)
 
   

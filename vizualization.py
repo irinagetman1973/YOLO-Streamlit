@@ -11,8 +11,7 @@ from datetime import datetime
 from matplotlib.figure import Figure
 
 
-# global df
-# df = None
+
 
 @st.cache_data
 def get_inference_data(user_id):

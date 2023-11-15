@@ -434,8 +434,7 @@ def compare_models_function():
                                 }
                                 data_to_save.append(detection_entry)
 
-                # Debug: Print prepared data
-                # st.write("Data prepared for saving:", data_to_save)
+                
 
                 # Now, save data to Firebase
                 try:
