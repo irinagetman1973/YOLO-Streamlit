@@ -71,16 +71,10 @@ def display_main_page():
     uploaded_file = st.sidebar.file_uploader(label="Choose a file...")
 
 
-    # # Check if the "Leave Feedback" button was pressed
-    # if 'feedback_clicked' not in st.session_state:
-    #     st.session_state['feedback_clicked'] = False
-
-    # if st.sidebar.button('Leave Feedback'):
-    #     st.session_state['feedback_clicked'] = True
 
 
 
-        # Check if a file has been uploaded or instructions have been displayed before:
+    # Check if a file has been uploaded or instructions have been displayed before:
     if uploaded_file is None :
      
        

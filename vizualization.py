@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 
 
 
-@st.cache_data
+# @st.cache_data
 def get_inference_data(user_id):
     ref = db.reference(f'/users/{user_id}/Inferences')
 
@@ -207,26 +207,33 @@ def get_filter_inputs(df, identifier):
         model_options = df['model'].unique().tolist()
         st.sidebar.divider()
         st.sidebar.markdown("### 📇 Select the parameters below to filter the dataset.")
+
+        # Update the session state if default models are not in options
+        if not set(st.session_state['selected_models']).issubset(set(model_options)):
+            st.session_state['selected_models'] = []
+
         selected_models = st.sidebar.multiselect(
             'Select Model(s)',
             model_options,
             default=st.session_state['selected_models']
-        )
+        ) if model_options else []
+
         st.session_state['selected_models'] = selected_models
 
         # Class ID filter - dynamically update based on selected models
-        if selected_models:  # If specific models are selected, filter the options for class_ids
-            class_id_options = df[df['model'].isin(selected_models)]['class_id'].unique().tolist()
-        else:  # If no model is selected, show all class_id options
-            class_id_options = df['class_id'].unique().tolist()
+        class_id_options = df[df['model'].isin(selected_models)]['class_id'].unique().tolist() if selected_models else df['class_id'].unique().tolist()
+
+        # Update the session state if default class IDs are not in options
+        if not set(st.session_state['selected_class_ids']).issubset(set(class_id_options)):
+            st.session_state['selected_class_ids'] = []
 
         selected_class_ids = st.sidebar.multiselect(
             'Select Class ID(s)',
             class_id_options,
             default=st.session_state['selected_class_ids']
-        )
-        # Update the session state only if class IDs are selected, otherwise default to all
-        st.session_state['selected_class_ids'] = selected_class_ids if selected_class_ids else class_id_options
+        ) if class_id_options else []
+
+        st.session_state['selected_class_ids'] = selected_class_ids
 
         # Date filter
         df['timestamp'] = pd.to_datetime(df['timestamp'])  # Ensure timestamp is in datetime format
@@ -240,7 +247,7 @@ def get_filter_inputs(df, identifier):
         # Return a dictionary of filter options
         filter_options = {
             'selected_models': selected_models,
-            'selected_class_ids': selected_class_ids or class_id_options,  # Use all if none selected
+            'selected_class_ids': selected_class_ids,
             'selected_date_range': selected_date_range
         }
 
@@ -306,43 +313,46 @@ def update_filtered_data():
 
 def visualize_inferences():
 
-      st.session_state['filtered'] = False
-      # Ensure that 'filtered_data' is initialized in the session state
-      if 'filtered_data' not in st.session_state:
+    st.session_state['filtered'] = False
+    # Ensure that 'filtered_data' is initialized in the session state
+    if 'filtered_data' not in st.session_state:
             st.session_state.filtered_data = pd.DataFrame()
-     
-     
-      user_id = get_logged_in_user_id()
-      
-      if not user_id:
+    
+    
+    user_id = get_logged_in_user_id()
+    
+    if not user_id:
             st.warning("User not logged in or user ID not available.")
             return
-            
-      data = get_inference_data(user_id)
 
-      if not data:  # Added data validation
+    
+
+       
+    data = get_inference_data(user_id)
+
+    if not data:  # Added data validation
         st.markdown("## 📊 Visualizations & Insights")
         st.markdown("### 🙈 Oops!")
         st.write("It seems there's an issue with your data or you don't have any data uploaded yet.")
         st.write("Upload your data and start seeing insights")
         return
- 
-      
 
-      st.header('📊 :green[Visualizations & Insights]')
-      st.divider()
-      
-      df = preprocess_data(data)
-      # Store the processed DataFrame in the session state
-      st.session_state.df = df
-      if df.empty:
+    
+
+    st.header('📊 :green[Visualizations & Insights]')
+    st.divider()
+    
+    df = preprocess_data(data)
+    # Store the processed DataFrame in the session state
+    st.session_state.df = df
+    if df.empty:
         st.error("Processed data is empty.")
         return
 
         
-      # Create an expander for Summary Statistics
-      with st.expander("**Summary Statistics** ", expanded=False):
-      
+    # Create an expander for Summary Statistics
+    with st.expander("**Summary Statistics** ", expanded=False):
+    
             st.subheader(':blue[Summary Statistics] 📈')
             st.markdown(f"**Total inferences:** {len(df)}")
             st.markdown(f"**Unique objects detected:** {df['class_id'].nunique()}")
@@ -352,63 +362,64 @@ def visualize_inferences():
             col1, col2 = st.columns(2)
 
             with col1:
-                  # Count the occurrences of each class_id and sort them in descending order
-                  class_id_counts = df["class_id"].value_counts()
+                # Count the occurrences of each class_id and sort them in descending order
+                class_id_counts = df["class_id"].value_counts()
 
-                  # Select the top 12 most frequent class_ids
-                  top_12_class_ids = class_id_counts.head(12)
-                  st.write(':blue[**📊 Frequency of Detected Objects**]')
-                  fig1, ax1 = plt.subplots()
-                  top_12_class_ids.plot(kind="bar", ax=ax1)
-                  st.pyplot(fig1,use_container_width=True)
+                # Select the top 12 most frequent class_ids
+                top_12_class_ids = class_id_counts.head(12)
+                st.write(':blue[**📊 Frequency of Detected Objects**]')
+                fig1, ax1 = plt.subplots()
+                top_12_class_ids.plot(kind="bar", ax=ax1)
+                st.pyplot(fig1,use_container_width=True)
 
             with col2:
-                  
-                  # Count the occurrences of each class_id and sort them in descending order
-                  class_id_counts = df["class_id"].value_counts()
+                
+                # Count the occurrences of each class_id and sort them in descending order
+                class_id_counts = df["class_id"].value_counts()
 
-                  # Select the top 12 most frequent class_ids
-                  top_12_class_ids = class_id_counts.head(12)
+                # Select the top 12 most frequent class_ids
+                top_12_class_ids = class_id_counts.head(12)
 
-                  # Plotting the pie chart for the top 12 class_ids
-                  st.write('🍩 :blue[**Proportion of Detected Objects**]')
-                  fig2, ax2 = plt.subplots()
-                  top_12_class_ids.plot.pie(autopct="%1.1f%%", ax=ax2)
-                  st.pyplot(fig2, use_container_width=True)
-      
-      
-      filter_options = get_filter_inputs(df, 'inferences')
-      st.session_state['filter_options'] = filter_options
-      # Assuming df is already in session_state and has been preprocessed
-      if 'filtered_data' not in st.session_state:
+                # Plotting the pie chart for the top 12 class_ids
+                st.write('🍩 :blue[**Proportion of Detected Objects**]')
+                fig2, ax2 = plt.subplots()
+                top_12_class_ids.plot.pie(autopct="%1.1f%%", ax=ax2)
+                st.pyplot(fig2, use_container_width=True)
+    
+    
+    filter_options = get_filter_inputs(df, 'inferences')
+    st.session_state['filter_options'] = filter_options
+    # Assuming df is already in session_state and has been preprocessed
+    if 'filtered_data' not in st.session_state:
             st.session_state['filtered_data'] = st.session_state.get('df', pd.DataFrame())
-     
+    
 
-      
-      # When the user clicks the 'Apply Filters' button, apply the filters.
-      if st.sidebar.button('Apply Filters'):
-             apply_filters()
+    
+    # When the user clicks the 'Apply Filters' button, apply the filters.
+    if st.sidebar.button('Apply Filters'):
+            apply_filters()
 
-      # Layout for data table and filter options
-      col1, col2 = st.columns(2)
+    # Layout for data table and filter options
+    col1, col2 = st.columns(2)
 
-      with col1:
+    with col1:
             with st.expander("Data", expanded=True):
-                  st.subheader("📜 :blue[**Data table**]")
-                  st.dataframe(df)
-                  st.download_button(
+                st.subheader("📜 :blue[**Data table**]")
+                st.dataframe(df)
+                
+                st.download_button(
                         label="Download Data as Excel",
                         data=to_excel(df),
                         file_name='full_data.xlsx',
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  )
-      
-      with col2:
-         
+                )
+    
+    with col2:
+        
             with st.expander("Filter Options", expanded=True):
-                  # Ensure 'df' and 'class_id' are in session state and have data before creating the selectbox
-                  if 'df' in st.session_state and 'class_id' in st.session_state.df.columns and not st.session_state.df.empty:
-                       
+                # Ensure 'df' and 'class_id' are in session state and have data before creating the selectbox
+                if 'df' in st.session_state and 'class_id' in st.session_state.df.columns and not st.session_state.df.empty:
+                    
 
                         st.subheader("🔍:blue[**Filtered Data Table**]")
                         st.dataframe(st.session_state.filtered_data)  # Display the filtered data from session state
@@ -420,74 +431,74 @@ def visualize_inferences():
                         file_name="data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         )
-                  else:
+                else:
                         st.write("Please select a class ID to display the data.")
                         
-      
+    
 
-     
+    
 
-      
-      # Visualization toggle
-      show_filtered_viz = st.checkbox('Show Visualizations for Filtered Data')
-      if show_filtered_viz:
+    
+    # Visualization toggle
+    show_filtered_viz = st.checkbox('Show Visualizations for Filtered Data')
+    if show_filtered_viz:
             generate_visualizations(st.session_state.filtered_data)
-                       
+                    
                  
- #---------------Time Series Visualization------------------------------------#                 
-      with st.expander("**Historical Detection Analysis**", expanded=False):
-      
-            st.subheader(':blue[Detection Trends Over Time] 📅')
-            col1, col2 = st.columns(2)
-            
-            # Convert the timestamp column to datetime format
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
+#---------------Time Series Visualization------------------------------------#                 
+    with st.expander("**Historical Detection Analysis**", expanded=False):
+    
+        st.subheader(':blue[Detection Trends Over Time] 📅')
+        col1, col2 = st.columns(2)
+        
+        # Convert the timestamp column to datetime format
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
 
-            # Specify colors and font
-            colors = ['#E63946', '#1D3557', '#457B9D']
-            font = {'family': 'serif',
-                  'color':  'green',
-                  'weight': 'normal',
-                  'size': 12,
-                  }
+        # Specify colors and font
+        colors = ['#E63946', '#1D3557', '#457B9D']
+        font = {'family': 'serif',
+                'color':  'green',
+                'weight': 'normal',
+                'size': 12,
+                }
 
-            
+        
 
-            with col1:
-                  st.write(':green[**Total Detections Over Time by Model**]')
-                  fig, ax = plt.subplots(figsize=(10, 5))
-                  for model in df['model'].unique():
-                        df_model = df[df['model'] == model]
-                        df_model_grouped = df_model.groupby("timestamp").size()
-                        df_model_grouped.plot(kind='line', ax=ax, label=model)
-                  ax.legend()
-                  ax.set_ylabel("Number of Detections", fontdict=font)
-                  ax.set_xlabel("Date", fontdict=font)
-                  ax.tick_params(axis='x', rotation=45)
-                  st.pyplot(fig)
+        with col1:
+                st.write(':green[**Total Detections Over Time by Model**]')
+                fig, ax = plt.subplots(figsize=(10, 5))
+                for model in df['model'].unique():
+                    df_model = df[df['model'] == model]
+                    df_model_grouped = df_model.groupby("timestamp").size()
+                    df_model_grouped.plot(kind='line', ax=ax, label=model)
+                ax.legend()
+                ax.set_ylabel("Number of Detections", fontdict=font)
+                ax.set_xlabel("Date", fontdict=font)
+                ax.tick_params(axis='x', rotation=45)
+                st.pyplot(fig)
 
-           
+        
 
-            if 'class_id' in df.columns:
-                  with col2:
-                        st.write(':green[**Unique Objects Detected Over Time**]')
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        unique_objects = df.groupby("timestamp")["class_id"].nunique()
-                        unique_objects.plot(kind='line', color=colors[1], ax=ax)
-                        ax.set_ylabel("Number of Unique Objects", fontdict=font)
-                        ax.set_xlabel("Date", fontdict=font)
-                        ax.tick_params(axis='x', rotation=45)
-                        st.pyplot(fig)
+        if 'class_id' in df.columns:
+                with col2:
+                    st.write(':green[**Unique Objects Detected Over Time**]')
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    unique_objects = df.groupby("timestamp")["class_id"].nunique()
+                    unique_objects.plot(kind='line', color=colors[1], ax=ax)
+                    ax.set_ylabel("Number of Unique Objects", fontdict=font)
+                    ax.set_xlabel("Date", fontdict=font)
+                    ax.tick_params(axis='x', rotation=45)
+                    st.pyplot(fig)
 
-            with col1:
-                  st.write(':green[**Model Utilization Over Time**]')
-                  fig, ax = plt.subplots(figsize=(10, 5))
-                  df_model_usage = df.groupby(['timestamp', 'model']).size().unstack().fillna(0)
-                  df_model_usage.plot(kind='line', ax=ax)
-                  ax.set_ylabel("Usage Frequency", fontdict=font)
-                  ax.set_xlabel("Date", fontdict=font)
-                  ax.tick_params(axis='x', rotation=45)
-                  st.pyplot(fig)
+        with col1:
+                st.write(':green[**Model Utilization Over Time**]')
+                fig, ax = plt.subplots(figsize=(10, 5))
+                df_model_usage = df.groupby(['timestamp', 'model']).size().unstack().fillna(0)
+                df_model_usage.plot(kind='line', ax=ax)
+                ax.set_ylabel("Usage Frequency", fontdict=font)
+                ax.set_xlabel("Date", fontdict=font)
+                ax.tick_params(axis='x', rotation=45)
+                st.pyplot(fig)
 
 
 

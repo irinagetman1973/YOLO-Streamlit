@@ -12,21 +12,16 @@
 
 import streamlit as st
 from pathlib import Path
-# import sys
-# import io
 from io import BytesIO
 from PIL import Image
 import cv2
 import config
 from utils_app import load_model, create_fig
 from au import db
-# import requests
-# import json
 import numpy as np
-from firebase_admin import db #firestore
+from firebase_admin import db 
 import re
 from yolov7.yolov7_wrapper import YOLOv7Wrapper
-#import gc
 import time
 
 
@@ -301,8 +296,8 @@ def compare_models_function():
     
     if len(selected_models) > 2:
         # Create a 2x2 grid for four models
-        row1_col1, row1_col2 = st.columns(2)
-        row2_col1, row2_col2 = st.columns(2)
+        row1_col1, row1_col2 = st.columns([0.45, 0.45])
+        row2_col1, row2_col2 = st.columns([0.45, 0.45])
         column_layouts = [(row1_col1, row1_col2), (row2_col1, row2_col2)]
     else:
         #-------- Create a single row for fewer models
