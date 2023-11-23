@@ -105,11 +105,7 @@ def preprocess_data(data):
                 count = inference_details.get('count', 1)
                 inference_details['count'] = parse_count(count)
                 
-            #     # Extract and clean 'coordinates' data, if present
-            #     if 'coordinates' in inference_details:
-            #         # The parse_coordinates now returns a dictionary
-            #         coords_dict = parse_coordinates(inference_details['coordinates'])
-            #         inference_details.update(coords_dict)
+           
                 
                 # Append the cleaned details to the flattened_data list
                 flattened_data.append(inference_details)
