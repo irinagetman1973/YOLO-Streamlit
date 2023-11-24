@@ -31,6 +31,7 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
+   cd YOLO-Streamlit
 
 2. **Install Dependencies**:
       ```bash
