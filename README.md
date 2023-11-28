@@ -37,17 +37,17 @@ myvenv\Sripts\activate
 
 
 ###  **Clone the Repository**:
-   ```bash
+   ```commandline
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
    cd YOLO-Streamlit
 
 ###  **Install Dependencies**:
-      ```bash
+      ```commandline
       pip install -r requirements.txt
 
 
 ### **Run the Application**:
-      ```bash
+      ```commandline
       streamlit run main.py
 
 ### Download Pre-trained YOLOv8 Detection Weights
@@ -70,6 +70,7 @@ Create a directory named `weights` and create a subdirectory named `detection` a
 
 
 
+
 | Model | Test Size | AP<sup>test</sup> | AP<sub>50</sub><sup>test</sup> | AP<sub>75</sub><sup>test</sup> | batch 1 fps | batch 32 average time |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: |
 | [**YOLOv7**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt) | 640 | **51.4%** | **69.7%** | **55.9%** | 161 *fps* | 2.8 *ms* |
@@ -77,7 +78,6 @@ Create a directory named `weights` and create a subdirectory named `detection` a
 |  |  |  |  |  |  |  |
 | [**YOLOv7-W6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6.pt) | 1280 | **54.9%** | **72.6%** | **60.1%** | 84 *fps* | 7.6 *ms* |
 | [**YOLOv7-E6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-e6.pt) | 1280 | **56.0%** | **73.5%** | **61.2%** | 56 *fps* | 12.3 *ms* |
-
 
 
 ###  Getting Started
