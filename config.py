@@ -47,6 +47,10 @@ YOLOv7_Champion = DETECTION_MODEL_DIR_V8 / "v7_champion.pt"
 YOLOv7_e6 = DETECTION_MODEL_DIR_V7 / "yolov7-e6.pt"
 YOLOv7_w6 = DETECTION_MODEL_DIR_V7 / "yolov7-w6.pt"
 YOLOv7x = DETECTION_MODEL_DIR_V7 / "yolov7x.pt"
+YOLOv7x = DETECTION_MODEL_DIR_V7 / "yolov7x.pt"
+Santa_v7 = DETECTION_MODEL_DIR_V7 / "Santa_v7.pt"
+
+
 
 DETECTION_MODEL_LIST_V8 = [
     "yolov8l.pt",
@@ -62,7 +66,8 @@ DETECTION_MODEL_LIST_V7 = [
     "v7_champion.pt",
     "yolov7-e6.pt",
     "yolov7-w6.pt",
-    "yolov7x.pt"
+    "yolov7x.pt",
+    "Santa_v7.pt"
 ]
 
 OBJECT_COUNTER = None
@@ -85,5 +90,6 @@ DETECTION_MODEL_DICT_V7 = {
     "v7_champion.pt": YOLOv7_Champion,
     "yolov7-e6.pt": YOLOv7_e6,
     "yolov7-w6.pt": YOLOv7_w6,
-    "yolov7x.pt": YOLOv7x
+    "yolov7x.pt": YOLOv7x,
+    "Santa_v7.pt": Santa_v7
 }
