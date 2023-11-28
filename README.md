@@ -26,24 +26,53 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 
 ### Installation and Setup
 
+### Create a virtual environment
+```commandline
+# for Windows
+# create 
+python -m venv myvenv
+
+# activate
+myvenv\Sripts\activate
 
 
-1. **Clone the Repository**:
+###  **Clone the Repository**:
    ```bash
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
    cd YOLO-Streamlit
 
-2. **Install Dependencies**:
+###  **Install Dependencies**:
       ```bash
       pip install -r requirements.txt
 
 
-3. **Run the Application**:
+### **Run the Application**:
       ```bash
       streamlit run main.py
 
+### Download Pre-trained YOLOv8 Detection Weights
+Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 object detection weights inside this directory. The weight files can be downloaded from the table below.
 
-## Getting Started
+| Model                                                                                | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | Speed<br><sup>CPU ONNX<br>(ms) | Speed<br><sup>A100 TensorRT<br>(ms) | params<br><sup>(M) | FLOPs<br><sup>(B) |
+| ------------------------------------------------------------------------------------ | --------------------- | -------------------- | ------------------------------ | ----------------------------------- | ------------------ | ----------------- |
+| [YOLOv8n](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt) | 640                   | 37.3                 | 80.4                           | 0.99                                | 3.2                | 8.7               |
+<!-- | [YOLOv8s](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s.pt) | 640                   | 44.9                 | 128.4                          | 1.20                                | 11.2               | 28.6              | -->
+| [YOLOv8m](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m.pt) | 640                   | 50.2                 | 234.7                          | 1.83                                | 25.9               | 78.9              |
+| [YOLOv8l](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8l.pt) | 640                   | 52.9                 | 375.2                          | 2.39                                | 43.7               | 165.2             |
+| [YOLOv8x](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8x.pt) | 640                   | 53.9                 | 479.1                          | 3.53                                | 68.2               | 257.8             |
+
+### Download Pre-trained YOLOv8 Detection Weights
+| Model | Test Size | AP<sup>test</sup> | AP<sub>50</sub><sup>test</sup> | AP<sub>75</sub><sup>test</sup> | batch 1 fps | batch 32 average time |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: |
+| [**YOLOv7**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt) | 640 | **51.4%** | **69.7%** | **55.9%** | 161 *fps* | 2.8 *ms* |
+| [**YOLOv7-X**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7x.pt) | 640 | **53.1%** | **71.2%** | **57.8%** | 114 *fps* | 4.3 *ms* |
+|  |  |  |  |  |  |  |
+| [**YOLOv7-W6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6.pt) | 1280 | **54.9%** | **72.6%** | **60.1%** | 84 *fps* | 7.6 *ms* |
+| [**YOLOv7-E6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-e6.pt) | 1280 | **56.0%** | **73.5%** | **61.2%** | 56 *fps* | 12.3 *ms* |
+
+
+
+###  Getting Started
 
 To begin exploring the capabilities of the YOLO Models Evaluation App, follow these simple steps:
 
@@ -55,7 +84,7 @@ To begin exploring the capabilities of the YOLO Models Evaluation App, follow th
 
 4. **Analyze Results**: Utilize the data analysis tools to interpret the models' performance and make informed decisions.
 
-5. **Engage with the Community**: Join discussions, share feedback, and contribute to the development of the application.
+5. **We love your feedback**: Join discussions, share feedback, and contribute to the development of the application.
 
 ---
 
@@ -63,7 +92,7 @@ To begin exploring the capabilities of the YOLO Models Evaluation App, follow th
 
 We welcome contributions of all kinds - from code improvements and bug fixes to documentation updates. Please feel free to fork the repository, make changes, and submit a pull request. Your contributions will help make this project even better!
 
-For more detailed guidelines on contributing, please refer to the `CONTRIBUTING.md` file in the repository.
+
 
 ---
 
@@ -73,7 +102,7 @@ This project is licensed under the [MIT License](LICENSE.md). Feel free to use, 
 
 ---
 
-**Enjoy exploring the world of YOLO models with the Comparative Vehicle Detection project!**
+**Enjoy exploring the world of YOLO models with the YOLO models Comparative  project!**
 
 🥝 Developed with passion by [Irina Getman](https://www.linkedin.com/in/irina-getman-16871b165/).
 
