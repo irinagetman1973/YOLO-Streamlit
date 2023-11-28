@@ -50,6 +50,8 @@ myvenv\Sripts\activate
       ```commandline
       streamlit run main.py
 
+
+
 ### Download Pre-trained YOLOv8 Detection Weights
 Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 object detection weights inside this directory. The weight files can be downloaded from the table below.
 
