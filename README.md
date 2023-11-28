@@ -31,24 +31,30 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 # for Windows
 # create 
 python -m venv myvenv
+```
 
-# activate
+### activate
+```commandline
 myvenv\Sripts\activate
+```
 
 
 ###  **Clone the Repository**:
    ```commandline
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
    cd YOLO-Streamlit
+```
 
 ###  **Install Dependencies**:
       ```commandline
       pip install -r requirements.txt
+      ```
 
 
 ### **Run the Application**:
       ```commandline
       streamlit run main.py
+      ```
 
 
 
