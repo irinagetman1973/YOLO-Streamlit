@@ -40,19 +40,19 @@ myvenv\Sripts\activate
 
 
 ###  **Clone the Repository**:
-   ```commandline
+```commandline
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
    cd YOLO-Streamlit
 ```
 
 ###  **Install Dependencies**:
-      ```commandline
+```commandline
       pip install -r requirements.txt
 ```
 
 
 ### **Run the Application**:
-      ```commandline
+```commandline
       streamlit run main.py
 ```
 
