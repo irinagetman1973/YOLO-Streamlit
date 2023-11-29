@@ -35,7 +35,7 @@ python -m venv myvenv
 
 ### activate
 ```commandline
-myvenv\Sripts\activate
+myvenv\Scripts\activate
 ```
 
 
@@ -59,7 +59,7 @@ myvenv\Sripts\activate
 
 
 ### Download Pre-trained YOLOv8 Detection Weights
-Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 object detection weights inside this directory. The weight files can be downloaded from the table below.
+Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 & YOLOv7 object detection weights inside this directory. The weight files can be downloaded from the tables below.
 
 
 
