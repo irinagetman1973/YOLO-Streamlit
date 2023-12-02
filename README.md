@@ -31,27 +31,35 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 # for Windows
 # create 
 python -m venv myvenv
+```
 
-# activate
-myvenv\Sripts\activate
+### activate
+```commandline
+myvenv\Scripts\activate
+```
 
 
 ###  **Clone the Repository**:
-   ```bash
+```commandline
    git clone https://github.com/irinagetman1973/YOLO-Streamlit
    cd YOLO-Streamlit
+```
 
 ###  **Install Dependencies**:
-      ```bash
+```commandline
       pip install -r requirements.txt
+```
 
 
 ### **Run the Application**:
-      ```bash
+```commandline
       streamlit run main.py
+```
+
+
 
 ### Download Pre-trained YOLOv8 Detection Weights
-Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 object detection weights inside this directory. The weight files can be downloaded from the table below.
+Create a directory named `weights` and create a subdirectory named `detection` and save the downloaded YOLOv8 & YOLOv7 object detection weights inside this directory. The weight files can be downloaded from the tables below.
 
 
 
@@ -59,14 +67,15 @@ Create a directory named `weights` and create a subdirectory named `detection` a
 | Model                                                                                | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | Speed<br><sup>CPU ONNX<br>(ms) | Speed<br><sup>A100 TensorRT<br>(ms) | params<br><sup>(M) | FLOPs<br><sup>(B) |
 | ------------------------------------------------------------------------------------ | --------------------- | -------------------- | ------------------------------ | ----------------------------------- | ------------------ | ----------------- |
 | [YOLOv8n](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt) | 640                   | 37.3                 | 80.4                           | 0.99                                | 3.2                | 8.7               |
-<!-- | [YOLOv8s](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s.pt) | 640                   | 44.9                 | 128.4                          | 1.20                                | 11.2               | 28.6              | -->
+| [YOLOv8s](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s.pt) | 640                   | 44.9                 | 128.4                          | 1.20                                | 11.2               | 28.6              |
 | [YOLOv8m](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m.pt) | 640                   | 50.2                 | 234.7                          | 1.83                                | 25.9               | 78.9              |
 | [YOLOv8l](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8l.pt) | 640                   | 52.9                 | 375.2                          | 2.39                                | 43.7               | 165.2             |
 | [YOLOv8x](https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8x.pt) | 640                   | 53.9                 | 479.1                          | 3.53                                | 68.2               | 257.8             |
 
 
 
-### Download Pre-trained YOLOv8 Detection Weights
+### Download Pre-trained YOLOv7 Detection Weights
+
 
 
 
@@ -77,7 +86,6 @@ Create a directory named `weights` and create a subdirectory named `detection` a
 |  |  |  |  |  |  |  |
 | [**YOLOv7-W6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6.pt) | 1280 | **54.9%** | **72.6%** | **60.1%** | 84 *fps* | 7.6 *ms* |
 | [**YOLOv7-E6**](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-e6.pt) | 1280 | **56.0%** | **73.5%** | **61.2%** | 56 *fps* | 12.3 *ms* |
-
 
 
 ###  Getting Started
