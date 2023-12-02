@@ -111,7 +111,7 @@ def load_model(model_path):
     model = YOLO(model_path)
     return model
 
-#  
+ 
 
 
 
@@ -174,7 +174,7 @@ def infer_uploaded_image(conf, model, uploaded_file):
                                         cords = [round(x) for x in cords]
                                         conf = round(box.conf[0].item(), 2)
 
-                                        detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Probability:</b> {conf}<br>---<br>"
+                                        detection_results += f"<b style='color: blue;'>Object type:</b> {class_id}<br><b style='color: blue;'>Coordinates:</b> {cords}<br><b style='color: blue;'>Confidence:</b> {conf}<br>---<br>"
                                         if class_id in count_dict:
                                             count_dict[class_id] += 1
                                         else:
