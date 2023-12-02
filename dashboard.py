@@ -1,7 +1,5 @@
 import streamlit as st
-import time
 from comparison import compare_models_function
-import config
 from vizualization import visualize_inferences
 from feedback import feedback_ui
 
@@ -92,7 +90,7 @@ def display_dashboard():
 
     elif section == "Compare models":
       
-        compare_models_function()  # Let's define this function next
+        compare_models_function() 
     
     elif section == "Statistics":
       
@@ -105,24 +103,4 @@ def display_dashboard():
     elif section == "Feedback Section":
 
         feedback_ui()
-       
-        # feedback = st.text_area("Leave your feedback")
-        # if st.button("Submit Feedback"):
-        #     st.write("Thank you for your feedback!")  # Placeholder. You'd typically save this feedback in a database.
-
-        # st.write("---")  # Line separator for clarity
-
-        # # GitHub link with emojis and animation
-        # st.write("If you liked my app, please, give me a star! :point_down:")
-        # github_link = "[![Star on GitHub](https://img.shields.io/github/stars/irinagetman1973/Urban-Vehicle-Detection-via-DL?style=social)](https://github.com/irinagetman1973/Urban-Vehicle-Detection-via-DL)"
-        # st.markdown(github_link, unsafe_allow_html=True)
-
-        # # Simple blinking animation for the star emoji
-        # placeholder = st.empty()
-        # for _ in range(5):  # Blink for 5 times
-        #     placeholder.markdown(":star:")
-        #     time.sleep(0.5)
-        #     placeholder.markdown(" ")
-        #     time.sleep(0.5)
-
-  
+     
