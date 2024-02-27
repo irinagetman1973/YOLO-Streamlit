@@ -1,6 +1,6 @@
 # YOLO models evaluation app using Streamlit
-![Alt text](hqdefault.jpg)
-[![Demo Video](hqdefault.jpg)](https://www.youtube.com/watch?v=l8wvdcJNVAA)
+
+[![Demo Video](hqdefault.jpg)](https://www.youtube.com/watch?v=l8wvdcJNVAA "Watch Our Demo Video")
 
 
 **Bachelor of Software Engineering**  
