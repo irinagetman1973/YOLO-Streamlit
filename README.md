@@ -28,7 +28,7 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 - **Statistics & Visualization**: Authorized users can access a comprehensive statistics section featuring:
 
 **Visualizations**:
-Pie Chart and Bar Graph: Display the most frequently detected objects.
+* * Pie Chart and Bar Graph: Display the most frequently detected objects.
 Filtered Dataset Visualization:
 Bar Chart of Object Frequencies: Shows the top 10 detected objects.
 Line Chart of Detections Over Time: Trends of daily detections.
