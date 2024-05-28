@@ -35,7 +35,38 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
       - **Heatmap of Detections by Model and Class**: Pivot table heatmap showing detections by model and class.
   - **Dataset Access**: Users can view the entire dataset of past detections, including models used, objects detected, coordinates of detected objects, and detection dates. The dataset can be filtered by dates, models, and objects, and both the filtered and original datasets can be downloaded as Excel files.
 
+---
+## Data Augmentation
 
+To enhance the model's performance, various data augmentation techniques were employed, including:
+- Outputs per training example: 3
+- Flip: Horizontal
+- 90° Rotate: Clockwise, Counter-Clockwise
+- Grayscale: Applied to 25% of images
+- Saturation: Adjusted between -25% and +25%
+- Brightness: Adjusted between -25% and +25%
+- Exposure: Adjusted between -25% and +25%
+- Bounding Box Adjustments: Flip (Horizontal), Brightness, Exposure
+
+## Grounding DINO
+
+For data labeling, the Grounding DINO model was used. Grounding DINO operates as a zero-shot object detection model, integrating a Transformer-based DINO detector with grounded pre-training, achieving significant performance metrics.
+
+## Metrics
+
+The performance of the models was evaluated using several established metrics, including:
+- **Precision**
+- **Recall**
+- **mAP (mean Average Precision)**
+- **F1 Score**
+
+## Colab Notebooks
+
+In the "Colab NB" folder in the repository, visitors can find notebooks where various processes and analyses were conducted.
+
+## Research Documents
+
+All findings from training and testing the models can be found in the documents located in the "paper" folder.
 
 ---
 
