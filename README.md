@@ -27,8 +27,8 @@ Welcome to the Comparative Object  Detection project!  This project, a capstone 
 - **User Authentication & Dashboard**: A built-in authentication system, utilizing **_Google Firebase_** for storage, allows users to securely access the dashboard, view past detection results, and provide feedback.
 - **Statistics & Visualization**: Authorized users can access a comprehensive statistics section featuring:
 
-**Visualizations**:
-* * Pie Chart and Bar Graph: Display the most frequently detected objects.
+ * **Visualizations**:
+  * Pie Chart and Bar Graph: Display the most frequently detected objects.
 Filtered Dataset Visualization:
 Bar Chart of Object Frequencies: Shows the top 10 detected objects.
 Line Chart of Detections Over Time: Trends of daily detections.
